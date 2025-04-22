@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #09090B;
+  color: white;
+}
+
+.node-todo {
+  fill: #6B7280;
+}
+
+.node-doing {
+  fill: #3B82F6;
+}
+
+.node-done {
+  fill: #10B981;
+}
+
+.link {
+  fill: none;
+  stroke: #4B5563;
+}
