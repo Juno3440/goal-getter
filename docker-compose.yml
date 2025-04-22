@@ -1,0 +1,27 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - GPT_API_KEY=${GPT_API_KEY}
+      - DEFAULT_USER_ID=${DEFAULT_USER_ID}
+      - FRONTEND_URL=${FRONTEND_URL}
+
+  web:
+    build: 
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    environment:
+      # API URL points to the FastAPI service via Docker network
+      - VITE_API_URL=http://api:8000
+      # Supabase environment (set these in your .env file or CI)
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
