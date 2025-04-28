@@ -2,12 +2,15 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY app/requirements.txt .
-
+# 1) install dependencies from api/requirements.txt
+COPY api/requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app app/
+# 2) copy the api source
+COPY api/ api/
 
-ENV PYTHONPATH=/
+# 3) ensure Python will find /app/api
+ENV PYTHONPATH=/app
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 4) launch the FastAPI app
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -8,6 +8,8 @@ import os
 from dotenv import load_dotenv
 from api import db
 from jose import jwt
+import logging
+import time
 
 # Load environment variables
 load_dotenv()
@@ -15,6 +17,7 @@ load_dotenv()
 # Configure auth
 security = HTTPBearer()
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-for-development")
+AUDIENCE = os.getenv("JWT_AUDIENCE", "authenticated")
 
 app = FastAPI(
     title="GPT GoalGraph API",
@@ -63,7 +66,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     """
     try:
         token = credentials.credentials
-        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"], audience=AUDIENCE)
+        # Warn if token is about to expire within 5 minutes
+        exp = payload.get("exp")
+        if exp:
+            now = int(time.time())
+            if exp - now <= 300:
+                logging.warning(f"JWT expiring soon (in {exp - now} seconds)")
         
         # Alternatively, validate with Supabase directly
         # user = db.supabase.auth.api.get_user(token)
