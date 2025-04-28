@@ -6,7 +6,7 @@ from uuid import uuid4, UUID
 from typing import List, Optional, Dict, Any
 import os
 from dotenv import load_dotenv
-import db
+from api import db
 from jose import jwt
 
 # Load environment variables

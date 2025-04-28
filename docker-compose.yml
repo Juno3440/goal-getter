@@ -19,9 +19,7 @@ services:
       - "3000:80"
     depends_on:
       - api
+    env_file:
+      - web/.env
     environment:
-      # API URL points to the FastAPI service via Docker network
       - VITE_API_URL=http://api:8000
-      # Supabase environment (set these in your .env file or CI)
-      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
