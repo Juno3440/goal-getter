@@ -6,7 +6,7 @@ from uuid import uuid4, UUID
 from typing import List, Optional, Dict, Any
 import os
 from dotenv import load_dotenv
-import db
+from api import db
 from jose import jwt
 
 # Load environment variables
@@ -15,6 +15,7 @@ load_dotenv()
 # Configure auth
 security = HTTPBearer()
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-for-development")
+print(f"[DEBUG] JWT_SECRET={JWT_SECRET}")
 
 app = FastAPI(
     title="GPT GoalGraph API",

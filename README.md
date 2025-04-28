@@ -49,11 +49,11 @@ A lightweight, AI-native goal management system with Supabase and GPT integratio
    npm install
    ```
 
-5. Run the backend
-   ```
-   cd ..
-   pip install -r api/requirements.txt
-   uvicorn api.main:app --reload
+5. Run the backend (using uv)
+   ```bash
+   uv venv
+   uv pip install -r api/requirements.txt "uvicorn[standard]" supabase python-dotenv
+   uv run -- uvicorn api.main:app --reload --env-file .env
    ```
 
 6. Run the frontend

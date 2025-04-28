@@ -9,6 +9,15 @@ load_dotenv()
 url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_KEY")
 supabase = create_client(url, key)
+# Debug: print environment values (masking key) and ping DB
+_masked_key = (key[:8] + "*" * (len(key) - 8)) if key else ""
+print(f"[DEBUG] SUPABASE_URL={url}")
+print(f"[DEBUG] SUPABASE_KEY={_masked_key}")
+try:
+    _ping = supabase.table("goals").select("id").limit(1).execute()
+    print(f"[DEBUG] DB PING result: {_ping.data}")
+except Exception as _e:
+    print(f"[DEBUG] DB PING error: {_e}")
 
 def build_tree(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
