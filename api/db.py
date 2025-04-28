@@ -1,13 +1,15 @@
-from supabase import create_client
+import os, time, logging
 from typing import Dict, List, Any, Optional
-import os
 from dotenv import load_dotenv
+from supabase import create_client
+from jose import jwt              # python-jose
 
 # Load environment variables
 load_dotenv()
 
 url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_KEY")
+JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", "authenticated")   # <-- NEW
 supabase = create_client(url, key)
 # Debug: print environment values (masking key) and ping DB
 _masked_key = (key[:8] + "*" * (len(key) - 8)) if key else ""
@@ -18,6 +20,24 @@ try:
     print(f"[DEBUG] DB PING result: {_ping.data}")
 except Exception as _e:
     print(f"[DEBUG] DB PING error: {_e}")
+    
+def verify_token(token: str) -> Dict[str, Any]:
+    """
+    Decode and validate a Supabase JWT.
+    Warns if the token expires within 5 minutes.
+    """
+    payload = jwt.decode(
+        token,
+        key,
+        algorithms=["HS256"],
+        audience=JWT_AUDIENCE
+    )
+
+    exp = payload.get("exp", 0)
+    ttl = exp - time.time()
+    if ttl <= 300:
+        logging.warning(f"JWT expires in {int(ttl)} s")
+    return payload
 
 def build_tree(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
