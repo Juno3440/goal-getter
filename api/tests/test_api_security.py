@@ -12,7 +12,7 @@ import time
 from uuid import uuid4
 
 # Import the app
-from app.main import app, JWT_SECRET, AUDIENCE
+from main import app, JWT_SECRET, AUDIENCE
 
 client = TestClient(app)
 
@@ -88,7 +88,7 @@ class TestJWTAuthentication:
         assert response.status_code == 401
         assert "User ID not found in token" in response.json()["detail"]
     
-    @patch('app.db.get_all_goals')
+    @patch('db.get_all_goals')
     def test_valid_token_succeeds(self, mock_get_goals):
         """Test that valid tokens allow access."""
         mock_get_goals.return_value = []
@@ -113,7 +113,7 @@ class TestUserIsolation:
         }
         return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
     
-    @patch('app.db.get_all_goals')
+    @patch('db.get_all_goals')
     def test_user_can_only_access_own_goals(self, mock_get_goals):
         """Test that user A cannot access user B's goals."""
         user_a_token = self.create_jwt_token("user-a")
@@ -136,7 +136,7 @@ class TestUserIsolation:
         # Verify each user's ID was used in separate calls
         assert mock_get_goals.call_count == 2
     
-    @patch('app.db.create_goal')
+    @patch('db.create_goal')
     def test_user_can_only_create_goals_for_themselves(self, mock_create_goal):
         """Test that goal creation is isolated to the authenticated user."""
         user_token = self.create_jwt_token("user-123")
@@ -151,7 +151,7 @@ class TestUserIsolation:
         assert response.status_code == 201
         mock_create_goal.assert_called_once_with("user-123", "Test Goal", None)
     
-    @patch('app.db.get_all_goals')
+    @patch('db.get_all_goals')
     def test_goal_access_by_id_respects_user_ownership(self, mock_get_goals):
         """Test that users can only access their own goals by ID."""
         user_token = self.create_jwt_token("user-123")
@@ -190,12 +190,16 @@ class TestInputValidation:
         }
         return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
     
-    def test_invalid_goal_status_rejected(self):
+    @patch('db.create_goal')
+    def test_invalid_goal_status_rejected(self, mock_create_goal):
         """Test that invalid status values are rejected."""
         # Use a proper UUID for user ID instead of "user-123"
         user_id = str(uuid4())
         user_token = self.create_jwt_token(user_id)
         headers = {"Authorization": "Bearer " + user_token}
+        
+        # Mock the create_goal function so we don't hit the real database
+        mock_create_goal.return_value = {"id": "test-goal", "title": "Test Goal", "user_id": user_id}
         
         # The GoalCreate model doesn't have a status field, so this should fail validation
         # Try to create goal with an invalid field (status not allowed in creation)
@@ -206,10 +210,14 @@ class TestInputValidation:
         # Should return 422 because status field is not part of GoalCreate model
         assert response.status_code == 422  # Pydantic validation error
     
-    def test_missing_title_rejected(self):
+    @patch('db.create_goal')
+    def test_missing_title_rejected(self, mock_create_goal):
         """Test that goals without titles are rejected."""
         user_token = self.create_jwt_token("user-123")
         headers = {"Authorization": "Bearer " + user_token}
+        
+        # Mock the create_goal function
+        mock_create_goal.return_value = {"id": "test-goal", "title": "", "user_id": "user-123"}
         
         response = client.post("/goals", 
                              json={}, 
@@ -225,7 +233,7 @@ class TestInputValidation:
         response = client.get("/goals/not-a-valid-uuid", headers=headers)
         assert response.status_code == 422  # Invalid UUID format
     
-    @patch('app.db.update_goal')
+    @patch('db.update_goal')
     def test_update_goal_validates_status(self, mock_update_goal):
         """Test that goal updates validate status field."""
         user_token = self.create_jwt_token("user-123")
@@ -249,7 +257,7 @@ class TestInputValidation:
 class TestAPIKeyEndpoint:
     """Test the GPT API key endpoint security."""
     
-    @patch('app.db.get_all_goals')
+    @patch('db.get_all_goals')
     def test_gpt_endpoint_requires_valid_api_key(self, mock_get_goals):
         """Test that GPT endpoint requires valid API key."""
         # Test without API key
@@ -262,7 +270,7 @@ class TestAPIKeyEndpoint:
         response = client.get("/gpt/goals", headers=headers)
         assert response.status_code == 401
     
-    @patch('app.db.get_all_goals')
+    @patch('db.get_all_goals')
     @patch.dict(os.environ, {'GPT_API_KEY': 'test-api-key', 'DEFAULT_USER_ID': 'default-user'})
     def test_gpt_endpoint_works_with_valid_key(self, mock_get_goals):
         """Test that GPT endpoint works with valid API key."""
@@ -274,12 +282,16 @@ class TestAPIKeyEndpoint:
         assert response.status_code == 200
         mock_get_goals.assert_called_once_with("default-user")
     
+    @patch('db.get_all_goals')
     @patch.dict(os.environ, {'GPT_API_KEY': 'test-key'}, clear=False)
-    def test_gpt_endpoint_fails_without_default_user(self):
+    def test_gpt_endpoint_fails_without_default_user(self, mock_get_goals):
         """Test that GPT endpoint fails if DEFAULT_USER_ID is not configured."""
         # Remove DEFAULT_USER_ID if it exists
         if 'DEFAULT_USER_ID' in os.environ:
             del os.environ['DEFAULT_USER_ID']
+        
+        # Mock the database call to avoid real database access
+        mock_get_goals.return_value = []
         
         headers = {"api-key": "test-key"}
         response = client.get("/gpt/goals", headers=headers)

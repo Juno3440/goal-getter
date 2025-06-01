@@ -57,6 +57,7 @@ class Goal(BaseModel):
 Goal.model_rebuild()
 
 class GoalCreate(BaseModel):
+    model_config = ConfigDict(extra='forbid')  # Reject extra fields
     title: str
     parent_id: Optional[UUID] = None
 
@@ -244,6 +245,8 @@ async def gpt_list_goals(api_key: Optional[str] = Header(None)):
     
     # Get user ID from API key mapping (or use a default during development)
     user_id = os.getenv("DEFAULT_USER_ID")
+    if not user_id:
+        raise HTTPException(status_code=500, detail="DEFAULT_USER_ID environment variable not configured")
     goals = db.get_all_goals(user_id)
     return goals
 
@@ -251,18 +254,3 @@ async def gpt_list_goals(api_key: Optional[str] = Header(None)):
 @app.get("/")
 async def root():
     return {"status": "ok", "message": "GPT GoalGraph API is running"}
-
-# GPT integration helper - for minimal API key auth
-@app.get("/gpt/goals", include_in_schema=False)
-async def gpt_list_goals(api_key: Optional[str] = Header(None)):
-    """Simplified endpoint for GPT to access goals without full JWT auth"""
-    # Very basic API key validation
-    if api_key != os.getenv("GPT_API_KEY"):
-        raise HTTPException(status_code=401, detail="Invalid API key")
-    
-    # Get user ID from API key mapping (or use a default during development)
-    user_id = os.getenv("DEFAULT_USER_ID")
-    if not user_id:
-        raise HTTPException(status_code=500, detail="DEFAULT_USER_ID environment variable not configured")
-    goals = db.get_all_goals(user_id)
-    return goals
