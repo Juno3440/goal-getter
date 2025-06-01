@@ -22,6 +22,7 @@ export interface TreeNode {
   ui: {
     collapsed: boolean;
   };
+  children?: TreeNode[];
 }
 
 export interface HierarchyNode extends TreeNode {
