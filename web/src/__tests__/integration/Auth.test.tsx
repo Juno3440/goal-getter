@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
@@ -18,7 +19,6 @@ vi.mock('../../supabase', () => ({
 import { supabase } from '../../supabase';
 const mockSignIn = supabase.auth.signInWithPassword as any;
 const mockSignUp = supabase.auth.signUp as any;
-const mockSignOut = supabase.auth.signOut as any;
 
 // Test wrapper
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (

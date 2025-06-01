@@ -6,11 +6,19 @@ import { motion } from 'framer-motion';
 import { TreeNode, TreeResponse, HierarchyNode } from '../types';
 import NodeCard from './NodeCard';
 
+// Type for the raw goal data from API before conversion to TreeNode
+interface RawGoalData {
+  id: string;
+  title: string;
+  status: string;
+  children?: RawGoalData[];
+}
+
 // Convert hierarchical tree data to flat TreeNode array
-function flattenTreeNodes(treeData: any[]): TreeNode[] {
+function flattenTreeNodes(treeData: RawGoalData[]): TreeNode[] {
   const flatNodes: TreeNode[] = [];
   
-  function traverseNode(node: any, parentId: string | null = null) {
+  function traverseNode(node: RawGoalData, parentId: string | null = null) {
     // Convert goal data to TreeNode format
     const treeNode: TreeNode = {
       id: node.id,
