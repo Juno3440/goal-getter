@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from uuid import uuid4, UUID
 from typing import List, Optional, Dict, Any
 import os
+import datetime
 from dotenv import load_dotenv
 from api import db
 from jose import jwt
@@ -19,6 +20,7 @@ security = HTTPBearer()
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-for-development")
 AUDIENCE = os.getenv("JWT_AUDIENCE", "authenticated")
 print(f"[DEBUG] JWT_SECRET={JWT_SECRET}")
+AUDIENCE = os.getenv("JWT_AUDIENCE", "authenticated")
 
 app = FastAPI(
     title="GPT GoalGraph API",
@@ -56,6 +58,25 @@ Goal.update_forward_refs()
 class GoalCreate(BaseModel):
     title: str
     parent_id: Optional[UUID] = None
+
+class GoalUpdate(BaseModel):
+    title: Optional[str] = None
+    status: Optional[str] = Field(default=None, pattern="^(todo|doing|done)$")
+
+class TreeNode(BaseModel):
+    id: str
+    parent_id: Optional[str] = None
+    title: str
+    progress: float = 0.0
+    status: str = "pending"
+    style: Dict[str, str] = Field(default_factory=lambda: {"color": "#1f2937", "accent": "#3b82f6"})
+    ui: Dict[str, bool] = Field(default_factory=lambda: {"collapsed": False})
+
+class TreeResponse(BaseModel):
+    schema_version: str = "1.0.0"
+    generated_at: str
+    root_id: Optional[str] = None
+    nodes: List[TreeNode]
 
 class GoalUpdate(BaseModel):
     title: Optional[str] = None
@@ -137,6 +158,87 @@ async def delete_goal(goal_id: UUID, user: Dict[str, Any] = Depends(get_current_
     if not success:
         raise HTTPException(status_code=404, detail="Goal not found")
     return None
+
+
+# JSON export endpoint for the tree visualization
+@app.get("/api/tree", response_model=TreeResponse)
+async def get_tree(user: Dict[str, Any] = Depends(get_current_user)):
+    """
+    Return the goal tree in a format optimized for frontend visualization.
+    
+    Returns:
+        A TreeResponse object with all nodes in a flat array and metadata
+    """
+    user_id = user.get("sub")
+    raw_goals = db.get_all_goals(user_id)
+    
+    # Convert the hierarchical structure to flat nodes array
+    nodes = []
+    
+    def _flatten_tree(goal_list, parent_id=None):
+        for goal in goal_list:
+            # Map status from backend to frontend format
+            status_map = {
+                "todo": "pending",
+                "doing": "active",
+                "done": "done"
+            }
+            
+            # Calculate progress based on children
+            progress = 0.0
+            if goal.get("status") == "done":
+                progress = 1.0
+            elif goal.get("status") == "doing":
+                progress = 0.5
+            
+            # Create TreeNode
+            node = {
+                "id": goal.get("id"),
+                "parent_id": parent_id,
+                "title": goal.get("title"),
+                "progress": progress,
+                "status": status_map.get(goal.get("status"), "pending"),
+                "style": {"color": "#1f2937", "accent": "#3b82f6"},
+                "ui": {"collapsed": False}
+            }
+            
+            nodes.append(node)
+            
+            # Process children
+            if goal.get("children"):
+                _flatten_tree(goal.get("children"), goal.get("id"))
+    
+    # Start with root goals (those without parent)
+    _flatten_tree(raw_goals)
+    
+    # Find a root node if available
+    root_id = None
+    if nodes:
+        # Use the first node without a parent as the root
+        for node in nodes:
+            if node["parent_id"] is None:
+                root_id = node["id"]
+                break
+    
+    return {
+        "schema_version": "1.0.0",
+        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "root_id": root_id,
+        "nodes": nodes
+    }
+
+# GPT integration helper - for minimal API key auth
+@app.get("/gpt/goals", include_in_schema=False)
+async def gpt_list_goals(api_key: Optional[str] = Header(None)):
+    """Simplified endpoint for GPT to access goals without full JWT auth"""
+    # Very basic API key validation
+    if api_key != os.getenv("GPT_API_KEY"):
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    
+    # Get user ID from API key mapping (or use a default during development)
+    user_id = os.getenv("DEFAULT_USER_ID")
+    goals = db.get_all_goals(user_id)
+    return goals
 
 # Root endpoint for health checks
 @app.get("/")

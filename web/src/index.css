@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --node-bg: theme('colors.gray.800');
+  --accent: theme('colors.blue.500');
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
@@ -12,6 +17,34 @@ body {
   color: white;
 }
 
+.node-card {
+  background-color: var(--node-bg);
+  border-top: 4px solid var(--accent);
+}
+
+/* Progress bar styling */
+progress {
+  /* Reset the default appearance */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+progress::-webkit-progress-bar {
+  background-color: #374151;
+  border-radius: 9999px;
+}
+
+progress::-webkit-progress-value {
+  background-color: var(--accent);
+  border-radius: 9999px;
+}
+
+progress::-moz-progress-bar {
+  background-color: var(--accent);
+  border-radius: 9999px;
+}
+
+/* Legacy D3 styles - keeping for compatibility */
 .node-todo {
   fill: #6B7280;
 }

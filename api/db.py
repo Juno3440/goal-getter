@@ -9,8 +9,8 @@ load_dotenv()
 
 url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_KEY")
-JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", "authenticated")   # <-- NEW
 supabase = create_client(url, key)
+JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", "authenticated")   # <-- NEW
 # Debug: print environment values (masking key) and ping DB
 _masked_key = (key[:8] + "*" * (len(key) - 8)) if key else ""
 print(f"[DEBUG] SUPABASE_URL={url}")
@@ -38,6 +38,7 @@ def verify_token(token: str) -> Dict[str, Any]:
     if ttl <= 300:
         logging.warning(f"JWT expires in {int(ttl)} s")
     return payload
+
 
 def build_tree(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
