@@ -10,17 +10,17 @@ def test_basic_math():
 def test_import_main():
     """Test that we can import the main module."""
     try:
-        from app import main
+        import main
         assert hasattr(main, 'app')
     except ImportError:
-        # Handle case where app isn't in path
+        # Handle case where api isn't in path
         assert True  # Allow test to pass for now
 
 def test_import_db():
     """Test that we can import the db module."""
     try:
-        from app import db
+        import db
         assert hasattr(db, 'build_tree')
     except ImportError:
-        # Handle case where app isn't in path
+        # Handle case where api isn't in path
         assert True  # Allow test to pass for now
