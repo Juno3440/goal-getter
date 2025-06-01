@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import GoalTree from './components/GoalTree';
@@ -14,7 +14,7 @@ function App() {
   };
 
   // Auth wrapper component to protect routes
-  const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     if (!session) {
       return <Navigate to="/" replace />;
     }

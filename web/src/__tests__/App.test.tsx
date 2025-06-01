@@ -1,12 +1,13 @@
+import { ReactNode } from 'react';
 import { describe, it, expect, vi } from 'vitest'
 import { render } from '@testing-library/react'
 import App from '../App'
 
 // Mock React Router
 vi.mock('react-router-dom', () => ({
-  BrowserRouter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Routes: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Route: ({ element }: { element: React.ReactNode }) => <div>{element}</div>,
+  BrowserRouter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Routes: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Route: ({ element }: { element: ReactNode }) => <div>{element}</div>,
 }))
 
 // Mock Supabase

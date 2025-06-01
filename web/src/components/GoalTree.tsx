@@ -291,7 +291,7 @@ export default function GoalTree({ onUpdate: _onUpdate, session }: GoalTreeProps
         {/* Using a group element with transform to create margin space */}
         <g transform={`translate(${margin.left}, ${margin.top})`}>
           {/* Links */}
-          {links.map((link: any, i: number) => (
+          {links.map((link: { source: { x: number; y: number }; target: { x: number; y: number } }, i: number) => (
             <motion.line 
               key={`link-${i}`}
               initial={{ opacity: 0 }}
@@ -306,7 +306,7 @@ export default function GoalTree({ onUpdate: _onUpdate, session }: GoalTreeProps
           ))}
           
           {/* Nodes */}
-          {descendants.map((node: any) => (
+          {descendants.map((node: { data: TreeNode; x: number; y: number }) => (
             <foreignObject
               key={`node-${node.data.id}`}
               x={node.y - NODE_WIDTH/2} // Swapped x and y for vertical layout
