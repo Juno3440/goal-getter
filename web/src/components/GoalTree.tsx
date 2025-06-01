@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { Tree } from '@visx/hierarchy';
 import { hierarchy } from 'd3-hierarchy';
@@ -7,20 +7,22 @@ import { TreeNode, TreeResponse, HierarchyNode } from '../types';
 import NodeCard from './NodeCard';
 
 // Dead-man switch wrapper to sanitize data and prevent crashes
-function deepCloneAndSanitize<T extends { children?: any }>(node: T): T {
+function deepCloneAndSanitize<T extends { children?: TreeNode[] }>(node: T): T {
   // Deep copy so we never mutate the original
-  const copy: any = JSON.parse(JSON.stringify(node));
+  const copy: T = JSON.parse(JSON.stringify(node));
 
   const stack = [copy];
   const offenders: string[] = [];
 
   while (stack.length) {
-    const n: any = stack.pop();
-    if (!Array.isArray(n.children)) {
-      offenders.push(n.id ?? '[no-id]');
-      n.children = [];              // Force-fix so layout never crashes
+    const n = stack.pop();
+    if (n && !Array.isArray(n.children)) {
+      offenders.push((n as TreeNode).id ?? '[no-id]');
+      (n as TreeNode).children = [];              // Force-fix so layout never crashes
     }
-    stack.push(...n.children);
+    if (n?.children) {
+      stack.push(...n.children);
+    }
   }
 
   if (offenders.length) {
@@ -29,7 +31,6 @@ function deepCloneAndSanitize<T extends { children?: any }>(node: T): T {
   return copy;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Node dimensions
 const NODE_WIDTH = 200;
@@ -42,7 +43,7 @@ interface GoalTreeProps {
 
 // Using the HierarchyNode interface from types.ts
 
-export default function GoalTree({ onUpdate, session }: GoalTreeProps) {
+export default function GoalTree({ onUpdate: _onUpdate, session }: GoalTreeProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [treeData, setTreeData] = useState<TreeResponse | null>(null);
@@ -54,14 +55,15 @@ export default function GoalTree({ onUpdate, session }: GoalTreeProps) {
   const containerHeight = containerRef?.clientHeight || 600;
 
   // Fetch tree data from API
-  const fetchTreeData = async () => {
+  const fetchTreeData = useCallback(async () => {
     console.log('Beginning fetchTreeData');
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
     setLoading(true);
     setError(null);
     
     try {
       console.log('Fetching data from API...');
-      const response = await fetch(`${API_URL}/api/tree`, {
+      const response = await fetch(`${apiUrl}/api/tree`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
@@ -81,7 +83,7 @@ export default function GoalTree({ onUpdate, session }: GoalTreeProps) {
       setLoading(false);
       console.log('Finished fetchTreeData');
     }
-  };
+  }, [session.access_token]);
 
   // Build hierarchy from flat nodes array
   const buildHierarchy = (nodes: TreeNode[], rootId: string | null): HierarchyNode | null => {
@@ -144,7 +146,7 @@ export default function GoalTree({ onUpdate, session }: GoalTreeProps) {
   useEffect(() => {
     console.log('Session effect triggered, fetching tree data');
     fetchTreeData();
-  }, [session]);
+  }, [fetchTreeData]);
   
   // Update hierarchy data when tree data changes
   useEffect(() => {
@@ -223,7 +225,7 @@ export default function GoalTree({ onUpdate, session }: GoalTreeProps) {
       console.error('Error creating layout:', err);
       return null;
     }
-  }, [hierarchyData, containerWidth, containerHeight]);
+  }, [hierarchyData, containerWidth, containerHeight, margin.top, margin.bottom, margin.left, margin.right]);
 
   if (loading) {
     return <div className="flex items-center justify-center h-full">Loading...</div>;

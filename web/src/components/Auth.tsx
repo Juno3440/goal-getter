@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase';
 
 interface AuthProps {
-  onAuthChange: (session: any) => void;
+  onAuthChange: (session: Session | null) => void;
 }
 
 export default function Auth({ onAuthChange }: AuthProps) {
