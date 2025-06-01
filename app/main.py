@@ -158,5 +158,7 @@ async def gpt_list_goals(api_key: Optional[str] = Header(None)):
     
     # Get user ID from API key mapping (or use a default during development)
     user_id = os.getenv("DEFAULT_USER_ID")
+    if not user_id:
+        raise HTTPException(status_code=500, detail="DEFAULT_USER_ID environment variable not configured")
     goals = db.get_all_goals(user_id)
     return goals

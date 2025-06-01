@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { Tree } from '@visx/hierarchy';
 import { hierarchy } from 'd3-hierarchy';
@@ -7,9 +7,9 @@ import { TreeNode, TreeResponse, HierarchyNode } from '../types';
 import NodeCard from './NodeCard';
 
 // Dead-man switch wrapper to sanitize data and prevent crashes
-function deepCloneAndSanitize<T extends { children?: TreeNode[] }>(node: T): T {
+function deepCloneAndSanitize(node: TreeNode): TreeNode {
   // Deep copy so we never mutate the original
-  const copy: T = JSON.parse(JSON.stringify(node));
+  const copy: TreeNode = JSON.parse(JSON.stringify(node));
 
   const stack = [copy];
   const offenders: string[] = [];
@@ -17,8 +17,8 @@ function deepCloneAndSanitize<T extends { children?: TreeNode[] }>(node: T): T {
   while (stack.length) {
     const n = stack.pop();
     if (n && !Array.isArray(n.children)) {
-      offenders.push((n as TreeNode).id ?? '[no-id]');
-      (n as TreeNode).children = [];              // Force-fix so layout never crashes
+      offenders.push(n.id ?? '[no-id]');
+      n.children = [];              // Force-fix so layout never crashes
     }
     if (n?.children) {
       stack.push(...n.children);
@@ -211,14 +211,13 @@ export default function GoalTree({ onUpdate: _onUpdate, session }: GoalTreeProps
       console.log('Hierarchy created successfully');
       
       // Adjust size to account for margins
-      const layout = Tree<HierarchyNode>({
-        size: [
+      const treeLayout = Tree<HierarchyNode>()
+        .size([
           containerHeight - margin.top - margin.bottom,
           containerWidth - margin.left - margin.right
-        ]
-      });
+        ]);
       
-      const computed = layout(root);
+      const computed = treeLayout(root);
       console.log('Layout computed successfully with nodes:', computed.descendants().length);
       return computed;
     } catch (err) {
@@ -292,7 +291,7 @@ export default function GoalTree({ onUpdate: _onUpdate, session }: GoalTreeProps
         {/* Using a group element with transform to create margin space */}
         <g transform={`translate(${margin.left}, ${margin.top})`}>
           {/* Links */}
-          {links.map((link, i) => (
+          {links.map((link: any, i: number) => (
             <motion.line 
               key={`link-${i}`}
               initial={{ opacity: 0 }}
@@ -307,7 +306,7 @@ export default function GoalTree({ onUpdate: _onUpdate, session }: GoalTreeProps
           ))}
           
           {/* Nodes */}
-          {descendants.map(node => (
+          {descendants.map((node: any) => (
             <foreignObject
               key={`node-${node.data.id}`}
               x={node.y - NODE_WIDTH/2} // Swapped x and y for vertical layout
