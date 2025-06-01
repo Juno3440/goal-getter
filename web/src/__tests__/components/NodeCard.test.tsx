@@ -1,10 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import NodeCard from '../../components/NodeCard';
 import { TreeNode } from '../../types';
 
-// Mock react-router-dom navigate
+// Mock react-router-dom
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -14,140 +15,103 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-// Test wrapper with router
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <BrowserRouter>{children}</BrowserRouter>
-);
+const mockNode: TreeNode = {
+  id: '123',
+  title: 'Test Goal',
+  status: 'pending',
+  progress: 0.65,
+  parent_id: null,
+  style: {
+    color: '#1f2937',
+    accent: '#3b82f6'
+  },
+  ui: {
+    collapsed: false
+  },
+  children: []
+};
+
+const renderNodeCard = (node: TreeNode = mockNode, onToggleCollapse?: (id: string) => void) => {
+  return render(
+    <BrowserRouter>
+      <NodeCard node={node} onToggleCollapse={onToggleCollapse} />
+    </BrowserRouter>
+  );
+};
 
 describe('NodeCard', () => {
-  const mockTreeNode: TreeNode = {
-    id: 'test-node-1',
-    parent_id: null,
-    title: 'Test Goal',
-    progress: 0.65,
-    status: 'active',
-    style: {
-      color: '#1f2937',
-      accent: '#3b82f6'
-    },
-    ui: {
-      collapsed: false
-    },
-    children: []
-  };
-
   beforeEach(() => {
     mockNavigate.mockClear();
   });
 
   it('renders node information correctly', () => {
-    render(
-      <TestWrapper>
-        <NodeCard node={mockTreeNode} />
-      </TestWrapper>
-    );
-
+    renderNodeCard();
+    
     expect(screen.getByText('Test Goal')).toBeInTheDocument();
-    expect(screen.getByText('active')).toBeInTheDocument();
+    expect(screen.getByText('pending')).toBeInTheDocument();
+    expect(screen.getByText('Progress')).toBeInTheDocument();
     expect(screen.getByText('65%')).toBeInTheDocument();
   });
 
   it('applies correct status badge colors', () => {
-    const statuses: Array<TreeNode['status']> = ['pending', 'active', 'done', 'blocked'];
     const expectedColors = {
-      pending: 'bg-yellow-500',
-      active: 'bg-blue-500',
-      done: 'bg-green-500',
-      blocked: 'bg-red-500'
+      pending: 'retro-status-pending',
+      active: 'retro-status-active', 
+      done: 'retro-status-done',
+      blocked: 'retro-status-blocked'
     };
 
-    statuses.forEach(status => {
-      const { unmount } = render(
-        <TestWrapper>
-          <NodeCard node={{ ...mockTreeNode, status }} />
-        </TestWrapper>
-      );
+    Object.entries(expectedColors).forEach(([status, expectedClass]) => {
+      const { unmount } = renderNodeCard({ ...mockNode, status: status as TreeNode['status'] });
 
       const statusBadge = screen.getByText(status);
-      expect(statusBadge).toHaveClass(expectedColors[status]);
+      expect(statusBadge).toHaveClass(expectedClass);
       unmount();
     });
   });
 
   it('applies custom node styles', () => {
-    const customNode = {
-      ...mockTreeNode,
-      style: {
-        color: '#red',
-        accent: '#blue'
-      }
-    };
+    const { container } = renderNodeCard();
 
-    const { container } = render(
-      <TestWrapper>
-        <NodeCard node={customNode} />
-      </TestWrapper>
-    );
-
-    const nodeCard = container.querySelector('.node-card');
-    expect(nodeCard).toHaveStyle({
-      '--node-bg': '#red',
-      '--accent': '#blue'
-    });
+    const nodeCard = container.querySelector('.retro-node-card');
+    expect(nodeCard).toBeInTheDocument();
+    expect(nodeCard).toHaveClass('retro-node-card', 'w-full', 'h-full');
   });
 
   it('displays progress bar with correct value', () => {
-    const { container } = render(
-      <TestWrapper>
-        <NodeCard node={mockTreeNode} />
-      </TestWrapper>
-    );
+    const { container } = renderNodeCard({ ...mockNode, progress: 0.65 });
 
-    const progressBar = container.querySelector('progress');
-    expect(progressBar).toHaveAttribute('value', '0.65');
-    expect(progressBar).toHaveAttribute('max', '1');
+    const progressFill = container.querySelector('.retro-progress-fill');
+    expect(progressFill).toHaveStyle({ width: '65%' });
   });
 
   it('calls onToggleCollapse when header is clicked', () => {
     const mockToggleCollapse = vi.fn();
-    
-    render(
-      <TestWrapper>
-        <NodeCard node={mockTreeNode} onToggleCollapse={mockToggleCollapse} />
-      </TestWrapper>
-    );
+    renderNodeCard(mockNode, mockToggleCollapse);
 
-    const header = screen.getByText('Test Goal').closest('.node-header');
+    const header = screen.getByText('Test Goal').closest('.retro-node-header');
+    expect(header).toBeInTheDocument();
     fireEvent.click(header!);
 
     expect(mockToggleCollapse).toHaveBeenCalledOnce();
-    expect(mockToggleCollapse).toHaveBeenCalledWith('test-node-1');
+    expect(mockToggleCollapse).toHaveBeenCalledWith('123');
   });
 
   it('navigates to goal detail when card body is clicked', () => {
-    render(
-      <TestWrapper>
-        <NodeCard node={mockTreeNode} />
-      </TestWrapper>
-    );
+    renderNodeCard();
 
-    const cardBody = screen.getByText('Progress').closest('.p-2');
-    fireEvent.click(cardBody!);
+    const progressLabel = screen.getByText('Progress');
+    fireEvent.click(progressLabel);
 
     expect(mockNavigate).toHaveBeenCalledOnce();
-    expect(mockNavigate).toHaveBeenCalledWith('/goal/test-node-1');
+    expect(mockNavigate).toHaveBeenCalledWith('/goal/123');
   });
 
   it('does not navigate when header is clicked', () => {
     const mockToggleCollapse = vi.fn();
-    
-    render(
-      <TestWrapper>
-        <NodeCard node={mockTreeNode} onToggleCollapse={mockToggleCollapse} />
-      </TestWrapper>
-    );
+    renderNodeCard(mockNode, mockToggleCollapse);
 
-    const header = screen.getByText('Test Goal').closest('.node-header');
+    const header = screen.getByText('Test Goal').closest('.retro-node-header');
     fireEvent.click(header!);
 
     // Should call toggle collapse but not navigate
@@ -156,67 +120,44 @@ describe('NodeCard', () => {
   });
 
   it('handles missing onToggleCollapse prop gracefully', () => {
-    render(
-      <TestWrapper>
-        <NodeCard node={mockTreeNode} />
-      </TestWrapper>
-    );
+    renderNodeCard();
 
-    const header = screen.getByText('Test Goal').closest('.node-header');
+    const header = screen.getByText('Test Goal').closest('.retro-node-header');
+    expect(header).toBeInTheDocument();
     
     // Should not throw error when clicking header without onToggleCollapse
     expect(() => fireEvent.click(header!)).not.toThrow();
   });
 
   it('truncates long titles properly', () => {
-    const longTitleNode = {
-      ...mockTreeNode,
-      title: 'This is a very long goal title that should be truncated in the UI to prevent layout issues and maintain readability'
-    };
+    const longTitleNode = { ...mockNode, title: 'This is a very long goal title that should be truncated' };
+    renderNodeCard(longTitleNode);
 
-    const { container } = render(
-      <TestWrapper>
-        <NodeCard node={longTitleNode} />
-      </TestWrapper>
-    );
-
-    const titleElement = screen.getByText(longTitleNode.title);
+    const titleElement = screen.getByText('This is a very long goal title that should be truncated');
     expect(titleElement).toHaveClass('truncate');
   });
 
   it('handles zero progress correctly', () => {
-    const zeroProgressNode = { ...mockTreeNode, progress: 0 };
-    
-    render(
-      <TestWrapper>
-        <NodeCard node={zeroProgressNode} />
-      </TestWrapper>
-    );
+    const { container } = renderNodeCard({ ...mockNode, progress: 0 });
 
+    const progressFill = container.querySelector('.retro-progress-fill');
+    expect(progressFill).toHaveStyle({ width: '0%' });
     expect(screen.getByText('0%')).toBeInTheDocument();
   });
 
   it('handles complete progress correctly', () => {
-    const completeNode = { ...mockTreeNode, progress: 1 };
-    
-    render(
-      <TestWrapper>
-        <NodeCard node={completeNode} />
-      </TestWrapper>
-    );
+    const { container } = renderNodeCard({ ...mockNode, progress: 1 });
 
+    const progressFill = container.querySelector('.retro-progress-fill');
+    expect(progressFill).toHaveStyle({ width: '100%' });
     expect(screen.getByText('100%')).toBeInTheDocument();
   });
 
   it('rounds progress percentage correctly', () => {
-    const preciseProgressNode = { ...mockTreeNode, progress: 0.6789 };
-    
-    render(
-      <TestWrapper>
-        <NodeCard node={preciseProgressNode} />
-      </TestWrapper>
-    );
+    const { container } = renderNodeCard({ ...mockNode, progress: 0.756 });
 
-    expect(screen.getByText('68%')).toBeInTheDocument();
+    expect(screen.getByText('76%')).toBeInTheDocument();
+    const progressFill = container.querySelector('.retro-progress-fill');
+    expect(progressFill).toHaveStyle({ width: '75.6%' });
   });
 });

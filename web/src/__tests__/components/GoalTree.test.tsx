@@ -399,7 +399,7 @@ describe('GoalTree', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/tree',
+        'http://localhost:8000/goals',
         expect.any(Object)
       );
     });
