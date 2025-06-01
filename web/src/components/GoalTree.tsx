@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { Tree } from '@visx/hierarchy';
+import { tree } from 'd3-hierarchy';
 import { hierarchy } from 'd3-hierarchy';
 import { motion } from 'framer-motion';
 import { TreeNode, TreeResponse, HierarchyNode } from '../types';
@@ -210,8 +210,8 @@ export default function GoalTree({ onUpdate: _onUpdate, session }: GoalTreeProps
       const root = hierarchy(safeData, d => d.children);
       console.log('Hierarchy created successfully');
       
-      // Adjust size to account for margins
-      const treeLayout = Tree<HierarchyNode>()
+      // Adjust size to account for margins  
+      const treeLayout = tree<HierarchyNode>()
         .size([
           containerHeight - margin.top - margin.bottom,
           containerWidth - margin.left - margin.right
