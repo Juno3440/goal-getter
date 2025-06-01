@@ -157,10 +157,13 @@ class TestUserIsolation:
         user_token = self.create_jwt_token("user-123")
         headers = {"Authorization": "Bearer " + user_token}
         
+        # Use a proper UUID for the goal ID
+        goal_uuid = str(uuid4())
+        
         # Mock user's goals (should contain the goal we're looking for)
         mock_get_goals.return_value = [
             {
-                "id": "goal-456",
+                "id": goal_uuid,
                 "title": "User's Goal",
                 "user_id": "user-123",
                 "children": []
@@ -168,7 +171,7 @@ class TestUserIsolation:
         ]
         
         # Request specific goal
-        response = client.get("/goals/goal-456", headers=headers)
+        response = client.get(f"/goals/{goal_uuid}", headers=headers)
         assert response.status_code == 200
         
         # Verify the database was queried with correct user ID
@@ -189,14 +192,18 @@ class TestInputValidation:
     
     def test_invalid_goal_status_rejected(self):
         """Test that invalid status values are rejected."""
-        user_token = self.create_jwt_token("user-123")
+        # Use a proper UUID for user ID instead of "user-123"
+        user_id = str(uuid4())
+        user_token = self.create_jwt_token(user_id)
         headers = {"Authorization": "Bearer " + user_token}
         
-        # Try to create goal with invalid status
+        # The GoalCreate model doesn't have a status field, so this should fail validation
+        # Try to create goal with an invalid field (status not allowed in creation)
         response = client.post("/goals", 
                              json={"title": "Test Goal", "status": "invalid-status"}, 
                              headers=headers)
         
+        # Should return 422 because status field is not part of GoalCreate model
         assert response.status_code == 422  # Pydantic validation error
     
     def test_missing_title_rejected(self):

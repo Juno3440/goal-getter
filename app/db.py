@@ -27,9 +27,45 @@ def build_tree(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     by_id = {str(r["id"]): {**r, "children": []} for r in rows}
     root = []
     
+    # Track nodes that are part of circular references
+    visited = set()
+    in_cycle = set()
+    
+    def detect_cycle(node_id: str, path: set) -> bool:
+        """Detect if a node is part of a circular reference."""
+        if node_id in path:
+            return True
+        if node_id in visited:
+            return False
+        
+        visited.add(node_id)
+        path.add(node_id)
+        
+        node = by_id.get(node_id)
+        if node:
+            parent_id = node.get("parent_id")
+            if parent_id and str(parent_id) in by_id:
+                if detect_cycle(str(parent_id), path):
+                    in_cycle.add(node_id)
+                    return True
+        
+        path.remove(node_id)
+        return False
+    
+    # Detect all circular references
+    for node_id in by_id:
+        if node_id not in visited:
+            detect_cycle(node_id, set())
+    
+    # Build the tree, treating circular nodes as roots
     for r in by_id.values():
         pid = r.get("parent_id")
-        if pid and str(pid) in by_id:
+        node_id = str(r["id"])
+        
+        # If this node is part of a cycle, treat it as a root
+        if node_id in in_cycle:
+            root.append(r)
+        elif pid and str(pid) in by_id and str(pid) not in in_cycle:
             by_id[str(pid)]["children"].append(r)
         else:
             root.append(r)

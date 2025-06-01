@@ -53,6 +53,8 @@ class Goal(BaseModel):
 Goal.update_forward_refs()
 
 class GoalCreate(BaseModel):
+    model_config = {"extra": "forbid"}
+    
     title: str
     parent_id: Optional[UUID] = None
 
