@@ -1,1 +1,0 @@
-# GoalGPT App Module

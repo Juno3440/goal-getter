@@ -1,13 +1,13 @@
 from fastapi import FastAPI, HTTPException, Depends, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from uuid import uuid4, UUID
 from typing import List, Optional, Dict, Any
 import os
 import datetime
 from dotenv import load_dotenv
-from api import db
+import db
 from jose import jwt
 import logging
 import time
@@ -38,13 +38,8 @@ app.add_middleware(
 )
 
 class Goal(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
-    title: str
-    status: str = Field(default="todo", pattern="^(todo|doing|done)$")
-    children: List["Goal"] = []
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "9b2b1ef8-95c8-4b8e-9f4a-2f1921d1fb3e",
                 "title": "Buy GPUs",
@@ -52,8 +47,14 @@ class Goal(BaseModel):
                 "children": [],
             }
         }
+    )
+    
+    id: UUID = Field(default_factory=uuid4)
+    title: str
+    status: str = Field(default="todo", pattern="^(todo|doing|done)$")
+    children: List["Goal"] = []
 
-Goal.update_forward_refs()
+Goal.model_rebuild()
 
 class GoalCreate(BaseModel):
     title: str

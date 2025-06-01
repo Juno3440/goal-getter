@@ -1,6 +1,105 @@
-# GPT GoalGraph
+# GoalGPT
 
-A lightweight, AI-native goal management system with Supabase and GPT integration.
+A modern goal tracking application with hierarchical goal management, designed for GPT integration.
+
+## 🏗️ Architecture
+
+- **`/api/`** - FastAPI backend with all endpoints
+- **`/web/`** - React frontend with TypeScript
+- **`/api/tests/`** - Backend test suite
+
+## 🚀 Quick Start
+
+### Backend
+```bash
+cd api
+pip install -r requirements.txt
+python -m uvicorn main:app --reload --port 8000
+```
+
+### Frontend
+```bash
+cd web
+npm install
+npm run dev
+```
+
+## 📋 Environment Setup
+
+### Backend (.env)
+```env
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
+JWT_SECRET=your_jwt_secret
+JWT_AUDIENCE=authenticated
+GPT_API_KEY=your_gpt_api_key
+DEFAULT_USER_ID=your_user_id
+FRONTEND_URL=http://localhost:3000
+```
+
+### Frontend (web/.env)
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_API_URL=http://localhost:8000
+```
+
+## 🔧 Development
+
+### Backend Commands
+```bash
+cd api
+python -m uvicorn main:app --reload  # Start server
+pytest                               # Run tests
+mypy .                              # Type checking
+flake8 .                            # Linting
+```
+
+### Frontend Commands
+```bash
+cd web
+npm run dev         # Start dev server
+npm run build       # Build for production
+npm run lint        # ESLint
+npm run type-check  # TypeScript checking
+npm test           # Run tests
+```
+
+## 🌐 API Endpoints
+
+- **GET /goals** - List all goals (hierarchical)
+- **GET /api/tree** - Tree visualization format
+- **POST /goals** - Create new goal
+- **PATCH /goals/{id}** - Update goal
+- **DELETE /goals/{id}** - Delete goal
+- **GET /gpt/goals** - GPT integration endpoint (API key auth)
+
+## 🤖 GPT Integration
+
+The API includes endpoints designed for GPT/AI tool calling:
+- JWT authentication for user-specific goals
+- API key authentication for AI agents
+- Tree visualization endpoint for frontend rendering
+
+## 🚢 Deployment
+
+The application is configured for easy deployment to Vercel or similar platforms. All environment variables need to be configured in your deployment environment.
+
+## 📁 Project Structure
+
+```
+GoalGPT/
+├── api/                 # Backend API
+│   ├── main.py         # FastAPI application
+│   ├── db.py           # Database operations
+│   ├── requirements.txt # Python dependencies
+│   └── tests/          # Backend tests
+├── web/                # Frontend React app
+│   ├── src/            # React source code
+│   ├── package.json    # Node dependencies
+│   └── ...
+└── .github/workflows/  # CI/CD pipeline
+```
 
 ## Features
 
