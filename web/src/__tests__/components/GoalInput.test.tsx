@@ -71,14 +71,14 @@ describe('GoalInput', () => {
   it('shows error when submitting empty title', async () => {
     render(<GoalInput session={mockSession} />);
 
-    const button = screen.getByRole('button', { name: 'ADD' });
-    
-    // Enable the button temporarily by adding text, then clearing it
     const input = screen.getByPlaceholderText('Enter goal title...');
-    fireEvent.change(input, { target: { value: 'temp' } });
-    fireEvent.change(input, { target: { value: '   ' } }); // Whitespace only
+    const form = input.closest('form')!;
     
-    fireEvent.click(button);
+    // Set whitespace-only text
+    fireEvent.change(input, { target: { value: '   ' } });
+    
+    // Submit form directly (button would be disabled)
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(screen.getByText('Goal title is required')).toBeInTheDocument();

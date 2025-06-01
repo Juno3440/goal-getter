@@ -3,20 +3,22 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Auth from '../../components/Auth';
 
-// Mock Supabase
-const mockSignIn = vi.fn();
-const mockSignUp = vi.fn();
-const mockSignOut = vi.fn();
-
+// Mock Supabase auth functions first
 vi.mock('../../supabase', () => ({
   supabase: {
     auth: {
-      signInWithPassword: mockSignIn,
-      signUp: mockSignUp,
-      signOut: mockSignOut,
+      signInWithPassword: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
     },
   },
 }));
+
+// Import the mocked functions after the mock
+import { supabase } from '../../supabase';
+const mockSignIn = supabase.auth.signInWithPassword as any;
+const mockSignUp = supabase.auth.signUp as any;
+const mockSignOut = supabase.auth.signOut as any;
 
 // Test wrapper
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -24,6 +26,8 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 describe('Auth Integration Tests', () => {
+  const mockOnAuthChange = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -31,7 +35,7 @@ describe('Auth Integration Tests', () => {
   it('renders login form by default', () => {
     render(
       <TestWrapper>
-        <Auth />
+        <Auth onAuthChange={mockOnAuthChange} />
       </TestWrapper>
     );
 
