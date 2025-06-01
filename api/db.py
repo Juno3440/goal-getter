@@ -9,6 +9,10 @@ load_dotenv()
 
 url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_KEY")
+
+if not url or not key:
+    raise ValueError("SUPABASE_URL and SUPABASE_KEY environment variables are required")
+
 supabase = create_client(url, key)
 JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", "authenticated")   # <-- NEW
 # Debug: print environment values (masking key) and ping DB

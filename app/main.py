@@ -85,6 +85,8 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 async def list_goals(user: Dict[str, Any] = Depends(get_current_user)):
     """Return entire goal tree for the authenticated user"""
     user_id = user.get("sub")  # JWT standard claim for user ID
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
     goals = db.get_all_goals(user_id)
     return goals
  
@@ -92,6 +94,8 @@ async def list_goals(user: Dict[str, Any] = Depends(get_current_user)):
 async def get_goal(goal_id: UUID, user: Dict[str, Any] = Depends(get_current_user)):
     """Get a single goal with nested children for the authenticated user"""
     user_id = user.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
     goals = db.get_all_goals(user_id)
     # Recursive search for the requested goal
     def _find(nodes: List[Dict[str, Any]], target_id: str) -> Optional[Dict[str, Any]]:
@@ -111,6 +115,8 @@ async def get_goal(goal_id: UUID, user: Dict[str, Any] = Depends(get_current_use
 async def create_goal(payload: GoalCreate, user: Dict[str, Any] = Depends(get_current_user)):
     """Create a new goal for the authenticated user"""
     user_id = user.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
     parent_id = str(payload.parent_id) if payload.parent_id else None
     goal = db.create_goal(user_id, payload.title, parent_id)
     return goal

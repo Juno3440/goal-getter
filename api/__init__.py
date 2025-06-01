@@ -1,3 +1,1 @@
-"""
-api package initializer.
-"""
+# GoalGPT App Module
