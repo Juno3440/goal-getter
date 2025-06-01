@@ -47,7 +47,7 @@ describe('Auth Integration Tests', () => {
   it('switches to signup mode when link is clicked', () => {
     render(
       <TestWrapper>
-        <Auth />
+        <Auth onAuthChange={mockOnAuthChange} />
       </TestWrapper>
     );
 
@@ -65,7 +65,7 @@ describe('Auth Integration Tests', () => {
 
     render(
       <TestWrapper>
-        <Auth />
+        <Auth onAuthChange={mockOnAuthChange} />
       </TestWrapper>
     );
 
@@ -96,7 +96,7 @@ describe('Auth Integration Tests', () => {
 
     render(
       <TestWrapper>
-        <Auth />
+        <Auth onAuthChange={mockOnAuthChange} />
       </TestWrapper>
     );
 
@@ -124,7 +124,7 @@ describe('Auth Integration Tests', () => {
 
     render(
       <TestWrapper>
-        <Auth />
+        <Auth onAuthChange={mockOnAuthChange} />
       </TestWrapper>
     );
 
@@ -153,7 +153,7 @@ describe('Auth Integration Tests', () => {
   it('validates email format', async () => {
     render(
       <TestWrapper>
-        <Auth />
+        <Auth onAuthChange={mockOnAuthChange} />
       </TestWrapper>
     );
 
@@ -176,7 +176,7 @@ describe('Auth Integration Tests', () => {
   it('validates password minimum length', async () => {
     render(
       <TestWrapper>
-        <Auth />
+        <Auth onAuthChange={mockOnAuthChange} />
       </TestWrapper>
     );
 
@@ -201,7 +201,7 @@ describe('Auth Integration Tests', () => {
 
     render(
       <TestWrapper>
-        <Auth />
+        <Auth onAuthChange={mockOnAuthChange} />
       </TestWrapper>
     );
 
@@ -223,7 +223,7 @@ describe('Auth Integration Tests', () => {
   it('clears error message when switching between login and signup', () => {
     render(
       <TestWrapper>
-        <Auth />
+        <Auth onAuthChange={mockOnAuthChange} />
       </TestWrapper>
     );
 
