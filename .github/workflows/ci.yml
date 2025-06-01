@@ -10,6 +10,15 @@ jobs:
   test-backend:
     runs-on: ubuntu-latest
     
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_AUDIENCE: authenticated
+      GPT_API_KEY: ${{ secrets.GPT_API_KEY }}
+      DEFAULT_USER_ID: test-user-id
+      FRONTEND_URL: http://localhost:3000
+    
     steps:
     - uses: actions/checkout@v4
     
