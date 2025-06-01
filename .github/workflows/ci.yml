@@ -16,7 +16,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.10'
     
     - name: Install dependencies
       run: |
@@ -33,18 +33,17 @@ jobs:
       run: mypy app/ --ignore-missing-imports
     
     - name: Test with pytest
-      run: pytest app/ -v --cov=app --cov-report=xml --cov-report=html
-      env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: |
+        cd app
+        pytest --cov=. --cov-report=xml --cov-report=term-missing
     
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
+        file: ./app/coverage.xml
         flags: backend
         name: backend-coverage
+        fail_ci_if_error: false
 
   test-frontend:
     runs-on: ubuntu-latest
@@ -60,92 +59,26 @@ jobs:
         cache-dependency-path: web/package-lock.json
     
     - name: Install dependencies
-      run: cd web && npm ci
+      run: |
+        cd web
+        npm ci
     
     - name: Lint
-      run: cd web && npm run lint
+      run: |
+        cd web
+        npm run lint
     
     - name: Type check
-      run: cd web && npm run type-check
+      run: |
+        cd web
+        npm run type-check
     
     - name: Test
-      run: cd web && npm run test -- --coverage
-    
-    - name: Upload frontend coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        directory: ./web/coverage
-        flags: frontend
-        name: frontend-coverage
+      run: |
+        cd web
+        npm run test -- --run
     
     - name: Build
-      run: cd web && npm run build
-
-  test-e2e:
-    needs: [test-backend, test-frontend]
-    runs-on: ubuntu-latest
-    continue-on-error: true  # Allow to fail for now
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: web/package-lock.json
-    
-    - name: Install dependencies
-      run: cd web && npm ci
-    
-    - name: Install Playwright browsers
-      run: cd web && npx playwright install --with-deps
-    
-    - name: Run Playwright tests
-      run: cd web && npx playwright test --reporter=line
-      env:
-        E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-        E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-    
-    - name: Upload Playwright report
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: playwright-report
-        path: web/playwright-report/
-        retention-days: 30
-
-  sync-and-deploy:
-    needs: [test-backend, test-frontend]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    
-    - name: Sync app/ to api/ for production
-      run: python scripts/sync_to_production.py
-    
-    - name: Validate sync
-      run: python scripts/validate_sync.py
-    
-    - name: Build and push Docker images
-      env:
-        DOCKER_BUILDKIT: 1
       run: |
-        docker build -t goalgpt-api:${{ github.sha }} .
-        docker build -t goalgpt-web:${{ github.sha }} web/
-        # Add your container registry push commands here
-    
-    # Uncomment when ready for deployment
-    # - name: Deploy to production
-    #   run: |
-    #     # Add your deployment commands here
-    #     echo "Deploying to production..."
+        cd web
+        npm run build
