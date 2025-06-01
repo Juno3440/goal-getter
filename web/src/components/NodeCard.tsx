@@ -1,3 +1,4 @@
+import { CSSProperties, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TreeNode } from '../types';
 
@@ -13,7 +14,7 @@ export default function NodeCard({ node, onToggleCollapse }: NodeCardProps) {
   const nodeStyle = {
     '--node-bg': node.style.color,
     '--accent': node.style.accent,
-  } as React.CSSProperties;
+  } as CSSProperties;
   
   // Status badge color
   const statusColor = {
@@ -29,7 +30,7 @@ export default function NodeCard({ node, onToggleCollapse }: NodeCardProps) {
     }
   };
   
-  const handleCardClick = (e: React.MouseEvent) => {
+  const handleCardClick = (e: MouseEvent<HTMLDivElement>) => {
     // If clicking on header, don't navigate
     if ((e.target as HTMLElement).closest('.node-header')) {
       return;
