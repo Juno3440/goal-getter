@@ -1,4 +1,5 @@
-import { CSSProperties, MouseEvent } from 'react';
+import React from 'react';
+import { MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TreeNode } from '../types';
 

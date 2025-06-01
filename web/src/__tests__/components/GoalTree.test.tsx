@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
@@ -5,7 +6,7 @@ import GoalTree from '../../components/GoalTree';
 import { TreeResponse, TreeNode } from '../../types';
 
 // Mock fetch globally
-global.fetch = vi.fn();
+globalThis.fetch = vi.fn();
 
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
@@ -78,12 +79,12 @@ describe('GoalTree', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset fetch mock
-    (global.fetch as any).mockClear();
+    (globalThis.fetch as any).mockClear();
   });
 
   it('shows loading state initially', () => {
     // Mock a pending fetch
-    (global.fetch as any).mockImplementation(() => new Promise(() => {}));
+    (globalThis.fetch as any).mockImplementation(() => new Promise(() => {}));
 
     render(
       <TestWrapper>
@@ -95,7 +96,7 @@ describe('GoalTree', () => {
   });
 
   it('fetches tree data on mount', async () => {
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockTreeResponse)
     });
@@ -107,7 +108,7 @@ describe('GoalTree', () => {
     );
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         'http://localhost:8000/goals',
         {
           headers: {
@@ -135,7 +136,7 @@ describe('GoalTree', () => {
       }
     ];
 
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockApiResponse)
     });
@@ -156,7 +157,7 @@ describe('GoalTree', () => {
   });
 
   it('displays error state when fetch fails', async () => {
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: false,
       status: 500
     });
@@ -174,7 +175,7 @@ describe('GoalTree', () => {
   });
 
   it('displays no goals message when tree is empty', async () => {
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({
         ...mockTreeResponse,
@@ -211,7 +212,7 @@ describe('GoalTree', () => {
       }
     ];
 
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockApiResponse)
     });
@@ -251,7 +252,7 @@ describe('GoalTree', () => {
       ]
     };
 
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(responseWithMissingChildren)
     });
@@ -270,7 +271,7 @@ describe('GoalTree', () => {
   });
 
   it('handles window resize events', async () => {
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockTreeResponse)
     });
@@ -296,7 +297,7 @@ describe('GoalTree', () => {
   });
 
   it('applies correct margins to tree layout', async () => {
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockTreeResponse)
     });
@@ -314,7 +315,7 @@ describe('GoalTree', () => {
   });
 
   it('memoizes tree layout to prevent unnecessary recalculations', async () => {
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockTreeResponse)
     });
@@ -340,7 +341,7 @@ describe('GoalTree', () => {
   });
 
   it('handles API errors gracefully', async () => {
-    (global.fetch as any).mockRejectedValue(new Error('Network error'));
+    (globalThis.fetch as any).mockRejectedValue(new Error('Network error'));
 
     render(
       <TestWrapper>
@@ -355,7 +356,7 @@ describe('GoalTree', () => {
 
   it('retries fetch on retry button click', async () => {
     // First call fails
-    (global.fetch as any)
+    (globalThis.fetch as any)
       .mockRejectedValueOnce(new Error('Network error'))
       .mockResolvedValue({
         ok: true,
@@ -382,11 +383,11 @@ describe('GoalTree', () => {
       expect(screen.getByText('Root Goal')).toBeInTheDocument();
     });
 
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
   });
 
   it('uses environment variable for API URL', async () => {
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockTreeResponse)
     });
@@ -398,7 +399,7 @@ describe('GoalTree', () => {
     );
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         'http://localhost:8000/goals',
         expect.any(Object)
       );
@@ -406,7 +407,7 @@ describe('GoalTree', () => {
   });
 
   it('handles collapsed state changes correctly', async () => {
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockTreeResponse)
     });
@@ -426,7 +427,7 @@ describe('GoalTree', () => {
   });
 
   it('sets container ref correctly for resize handling', async () => {
-    (global.fetch as any).mockResolvedValue({
+    (globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockTreeResponse)
     });
