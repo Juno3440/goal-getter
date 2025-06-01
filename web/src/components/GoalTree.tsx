@@ -1,163 +1,333 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Session } from '@supabase/supabase-js';
-import * as d3 from 'd3';
-import { Goal } from '../types';
+import { Tree } from '@visx/hierarchy';
+import { hierarchy } from 'd3-hierarchy';
+import { motion } from 'framer-motion';
+import { TreeNode, TreeResponse, HierarchyNode } from '../types';
+import NodeCard from './NodeCard';
 
-interface GoalTreeProps {
-  data: Goal[];
-  onUpdate: () => void;
-  session: Session;
+// Dead-man switch wrapper to sanitize data and prevent crashes
+function deepCloneAndSanitize<T extends { children?: any }>(node: T): T {
+  // Deep copy so we never mutate the original
+  const copy: any = JSON.parse(JSON.stringify(node));
+
+  const stack = [copy];
+  const offenders: string[] = [];
+
+  while (stack.length) {
+    const n: any = stack.pop();
+    if (!Array.isArray(n.children)) {
+      offenders.push(n.id ?? '[no-id]');
+      n.children = [];              // Force-fix so layout never crashes
+    }
+    stack.push(...n.children);
+  }
+
+  if (offenders.length) {
+    console.error('⚠️ Nodes missing children array → fixed on the fly:', offenders);
+  }
+  return copy;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-function GoalTree({ data, onUpdate, session }: GoalTreeProps) {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+// Node dimensions
+const NODE_WIDTH = 200;
+const NODE_HEIGHT = 120;
 
-  useEffect(() => {
-    if (!svgRef.current || !data) return;
+interface GoalTreeProps {
+  onUpdate?: () => void;
+  session: Session;
+}
 
-    const svg = d3.select(svgRef.current);
-    svg.selectAll('*').remove();
+// Using the HierarchyNode interface from types.ts
 
-    const margin = { top: 30, right: 30, bottom: 30, left: 50 };
-    const width = svgRef.current.clientWidth - margin.left - margin.right;
-    const height = svgRef.current.clientHeight - margin.top - margin.bottom;
+export default function GoalTree({ onUpdate, session }: GoalTreeProps) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [treeData, setTreeData] = useState<TreeResponse | null>(null);
+  const [hierarchyData, setHierarchyData] = useState<HierarchyNode | null>(null);
+  const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
+  
+  // Use clientWidth/Height directly from the ref instead of state
+  const containerWidth = containerRef?.clientWidth || 1000;
+  const containerHeight = containerRef?.clientHeight || 600;
 
-    const g = svg
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-
-    // Create a hierarchy from the root data
-    const root = d3.hierarchy({ children: data });
-
-    // Generate tree layout
-    const treeLayout = d3.tree().size([height, width]);
-    treeLayout(root);
-
-    // Add links between nodes
-    g.selectAll('.link')
-      .data(root.links())
-      .enter()
-      .append('path')
-      .attr('class', 'link')
-      .attr('d', d3.linkHorizontal()
-        .x(d => d.y)
-        .y(d => d.x)
-      );
-
-    // Create node groups
-    const nodes = g.selectAll('.node')
-      .data(root.descendants().slice(1)) // Skip the artificial root
-      .enter()
-      .append('g')
-      .attr('class', 'node')
-      .attr('transform', d => `translate(${d.y},${d.x})`)
-      .attr('data-id', d => d.data.id)
-      .style('cursor', 'pointer')
-      .on('click', (event, d) => {
-        setSelectedGoal(d.data);
-      });
-
-    // Add circles for nodes
-    nodes.append('circle')
-      .attr('r', 8)
-      .attr('class', d => `node-${d.data.status}`);
-
-    // Add labels to nodes
-    nodes.append('text')
-      .attr('dy', '.31em')
-      .attr('x', d => d.children ? -12 : 12)
-      .attr('text-anchor', d => d.children ? 'end' : 'start')
-      .text(d => d.data.title)
-      .style('fill', 'white');
-
-  }, [data]);
-
-  const updateGoalStatus = async (goalId: string, newStatus: string) => {
+  // Fetch tree data from API
+  const fetchTreeData = async () => {
+    console.log('Beginning fetchTreeData');
+    setLoading(true);
+    setError(null);
+    
     try {
-      await fetch(`${API_URL}/goals/${goalId}`, {
-        method: 'PATCH',
+      console.log('Fetching data from API...');
+      const response = await fetch(`${API_URL}/api/tree`, {
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ status: newStatus })
+        }
       });
-      onUpdate(); // Refresh the goal tree
-      setSelectedGoal(null);
-    } catch (error) {
-      console.error('Failed to update goal status:', error);
-    }
-  };
-
-  const deleteGoal = async (goalId: string) => {
-    if (confirm('Are you sure you want to delete this goal?')) {
-      try {
-        await fetch(`${API_URL}/goals/${goalId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          }
-        });
-        onUpdate(); // Refresh the goal tree
-        setSelectedGoal(null);
-      } catch (error) {
-        console.error('Failed to delete goal:', error);
-      }
-    }
-  };
-
-  return (
-    <div className="relative w-full h-full">
-      <svg ref={svgRef} className="w-full h-full"></svg>
       
-      {selectedGoal && (
-        <div className="absolute top-4 right-4 bg-gray-800 p-4 rounded-lg shadow-lg w-64">
-          <h3 className="text-lg font-bold mb-2">{selectedGoal.title}</h3>
-          <div className="mb-4">
-            <p className="text-sm">Status: {selectedGoal.status}</p>
-          </div>
-          <div className="flex flex-col space-y-2">
-            <h4 className="text-sm font-bold">Change Status:</h4>
-            <div className="flex space-x-2">
-              <button 
-                className="px-3 py-1 bg-gray-600 rounded hover:bg-gray-500 text-xs"
-                onClick={() => updateGoalStatus(selectedGoal.id, 'todo')}
-              >
-                Todo
-              </button>
-              <button 
-                className="px-3 py-1 bg-blue-600 rounded hover:bg-blue-500 text-xs"
-                onClick={() => updateGoalStatus(selectedGoal.id, 'doing')}
-              >
-                Doing
-              </button>
-              <button 
-                className="px-3 py-1 bg-green-600 rounded hover:bg-green-500 text-xs"
-                onClick={() => updateGoalStatus(selectedGoal.id, 'done')}
-              >
-                Done
-              </button>
-            </div>
-            <button 
-              className="px-3 py-1 bg-red-600 rounded hover:bg-red-500 mt-4 text-xs"
-              onClick={() => deleteGoal(selectedGoal.id)}
+      if (!response.ok) {
+        throw new Error('Failed to fetch tree data');
+      }
+      
+      const data = await response.json();
+      console.log('Received data:', data);
+      setTreeData(data);
+    } catch (err) {
+      console.error('Error fetching tree data:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+      console.log('Finished fetchTreeData');
+    }
+  };
+
+  // Build hierarchy from flat nodes array
+  const buildHierarchy = (nodes: TreeNode[], rootId: string | null): HierarchyNode | null => {
+    if (!nodes.length) return null;
+    
+    // Find the root node (either specified by rootId or first one without parent)
+    const rootNode = rootId 
+      ? nodes.find(n => n.id === rootId) 
+      : nodes.find(n => n.parent_id === null);
+    
+    if (!rootNode) return null;
+    
+    // Recursive function to build the tree
+    const buildNode = (node: TreeNode): HierarchyNode => {
+      // Get children for this node - ONLY find immediate children
+      // IMPORTANT: Don't filter by collapsed state here - we must preserve structure
+      // The UI will handle showing/hiding based on collapsed state
+      const kids = nodes
+        .filter(n => n.parent_id === node.id) 
+        .map(childNode => buildNode(childNode));
+      
+      // CRITICAL FIX: Always return an array for children, guaranteeing consistency
+      return {
+        ...node,
+        children: kids // ALWAYS an array (even if empty)
+      };
+    };
+    
+    const result = buildNode(rootNode);
+    return result;
+  };
+
+  // Toggle collapse state for a node
+  const handleToggleCollapse = (id: string) => {
+    if (!treeData) return;
+    
+    console.log('Toggling collapse for node:', id);
+    
+    const updatedNodes = treeData.nodes.map(node => {
+      if (node.id === id) {
+        console.log(`Node ${id} collapse state changing to:`, !node.ui.collapsed);
+        return {
+          ...node,
+          ui: {
+            ...node.ui,
+            collapsed: !node.ui.collapsed
+          }
+        };
+      }
+      return node;
+    });
+    
+    setTreeData({
+      ...treeData,
+      nodes: updatedNodes
+    });
+  };
+
+  // Initial fetch of tree data
+  useEffect(() => {
+    console.log('Session effect triggered, fetching tree data');
+    fetchTreeData();
+  }, [session]);
+  
+  // Update hierarchy data when tree data changes
+  useEffect(() => {
+    console.log('Tree data changed effect triggered');
+    if (treeData) {
+      console.log('Building hierarchy from tree data with nodes:', treeData.nodes.length);
+      const hierarchyRoot = buildHierarchy(treeData.nodes, treeData.root_id);
+      console.log('Setting hierarchy data:', hierarchyRoot);
+      
+      // Log type of hierarchyRoot to help debug
+      if (hierarchyRoot) {
+        console.log('hierarchyRoot children type:', 
+          Array.isArray(hierarchyRoot.children) ? 'array' : typeof hierarchyRoot.children,
+          'length:', hierarchyRoot.children ? hierarchyRoot.children.length : 'N/A'
+        );
+      }
+      
+      setHierarchyData(hierarchyRoot);
+    }
+  }, [treeData]);
+
+  // Update dimensions on window resize
+  useEffect(() => {
+    console.log('Window resize effect setup');
+    const handleResize = () => {
+      // Force a re-render without changing state
+      if (containerRef) {
+        console.log('Window resized, forcing re-render');
+        containerRef.style.height = `${containerRef.clientHeight - 1}px`;
+        setTimeout(() => {
+          if (containerRef) {
+            containerRef.style.height = '100%';
+          }
+        }, 0);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [containerRef]);
+
+  // Define margins for layout
+  const margin = { top: 50, left: 50, right: 20, bottom: 20 };
+  
+  // Use memoization to prevent unnecessary layout calculations
+  const treeLayout = useMemo(() => {
+    if (!hierarchyData) {
+      console.log('No hierarchy data available for layout');
+      return null;
+    }
+    
+    console.log('Creating memoized layout...');
+    try {
+      // Apply the dead-man switch to guarantee sanitized data
+      const safeData = deepCloneAndSanitize(hierarchyData);
+      
+      // Using a simple accessor now that we've sanitized the data
+      const root = hierarchy(safeData, d => d.children);
+      console.log('Hierarchy created successfully');
+      
+      // Adjust size to account for margins
+      const layout = Tree<HierarchyNode>({
+        size: [
+          containerHeight - margin.top - margin.bottom,
+          containerWidth - margin.left - margin.right
+        ]
+      });
+      
+      const computed = layout(root);
+      console.log('Layout computed successfully with nodes:', computed.descendants().length);
+      return computed;
+    } catch (err) {
+      console.error('Error creating layout:', err);
+      return null;
+    }
+  }, [hierarchyData, containerWidth, containerHeight]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-full">Loading...</div>;
+  }
+  
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full text-red-500">
+        Error: {error}
+        <button 
+          onClick={fetchTreeData}
+          className="ml-4 px-3 py-1 bg-gray-800 rounded hover:bg-gray-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+  
+  if (!hierarchyData || !treeLayout) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        No goals found. Create your first goal to get started!
+      </div>
+    );
+  }
+
+  console.log('Rendering tree with dimensions:', containerWidth, 'x', containerHeight);
+  
+  // Additional guard for treeLayout
+  if (!treeLayout) {
+    console.log('treeLayout is null at render time');
+    return (
+      <div className="flex items-center justify-center h-full">
+        Preparing layout...
+      </div>
+    );
+  }
+  
+  // Make sure we have access to links and descendants
+  let links = [];
+  let descendants = [];
+  
+  try {
+    links = treeLayout.links();
+    descendants = treeLayout.descendants();
+    console.log(`Render has ${links.length} links and ${descendants.length} nodes`);
+  } catch (err) {
+    console.error('Error accessing layout data:', err);
+    return (
+      <div className="flex items-center justify-center h-full text-red-500">
+        Error rendering tree visualization
+      </div>
+    );
+  }
+  
+  return (
+    <div 
+      id="goal-tree-container" 
+      className="w-full h-full"
+      ref={setContainerRef}
+    >
+      <svg width={containerWidth} height={containerHeight}>
+        {/* Using a group element with transform to create margin space */}
+        <g transform={`translate(${margin.left}, ${margin.top})`}>
+          {/* Links */}
+          {links.map((link, i) => (
+            <motion.line 
+              key={`link-${i}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              x1={link.source.y} // Swapped x and y for vertical layout
+              y1={link.source.x}
+              x2={link.target.y}
+              y2={link.target.x}
+              stroke="#374151"
+              strokeWidth={2}
+            />
+          ))}
+          
+          {/* Nodes */}
+          {descendants.map(node => (
+            <foreignObject
+              key={`node-${node.data.id}`}
+              x={node.y - NODE_WIDTH/2} // Swapped x and y for vertical layout
+              y={node.x - NODE_HEIGHT/2}
+              width={NODE_WIDTH}
+              height={NODE_HEIGHT}
             >
-              Delete Goal
-            </button>
-          </div>
-          <button 
-            className="absolute top-2 right-2 text-gray-400 hover:text-white"
-            onClick={() => setSelectedGoal(null)}
-          >
-            ✕
-          </button>
-        </div>
-      )}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              style={{ width: '100%', height: '100%' }}
+            >
+              <NodeCard 
+                node={node.data} 
+                onToggleCollapse={handleToggleCollapse}
+              />
+            </motion.div>
+          </foreignObject>
+        ))}
+        </g>
+      </svg>
     </div>
   );
 }
-
-export default GoalTree;

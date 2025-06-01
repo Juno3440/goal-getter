@@ -55,3 +55,7 @@ data/
 .env.development.local
 .env.test.local
 .env.production.local
+todo.txt
+.mcp.json
+
+**/.claude/settings.local.json
