@@ -1,3 +1,4 @@
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
 
@@ -5,7 +6,7 @@ interface GoalKanbanProps {
   session: Session;
 }
 
-export default function GoalKanban({ session }: GoalKanbanProps) {
+export default function GoalKanban({ session: _session }: GoalKanbanProps) {
   const { id } = useParams<{ id: string }>();
   
   return (

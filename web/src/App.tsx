@@ -1,12 +1,10 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import GoalTree from './components/GoalTree';
 import GoalKanban from './components/GoalKanban';
 import Auth from './components/Auth';
 import { supabase } from './supabase';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);

@@ -176,8 +176,6 @@ async def get_tree(user: Dict[str, Any] = Depends(get_current_user)):
         A TreeResponse object with all nodes in a flat array and metadata
     """
     user_id = user.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="User ID not found in token")
     raw_goals = db.get_all_goals(user_id)
     
     # Convert the hierarchical structure to flat nodes array
