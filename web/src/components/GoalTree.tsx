@@ -211,7 +211,7 @@ export default function GoalTree({ onUpdate: _onUpdate, session }: GoalTreeProps
       console.log('Hierarchy created successfully');
       
       // Adjust size to account for margins  
-      const treeLayout = tree<HierarchyNode>()
+      const treeLayout = tree<TreeNode>()
         .size([
           containerHeight - margin.top - margin.bottom,
           containerWidth - margin.left - margin.right
