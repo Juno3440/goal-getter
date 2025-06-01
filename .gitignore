@@ -21,6 +21,27 @@ var/
 *.egg
 .env
 
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# uv
+.uv_cache/
+uv.lock
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
 # Node.js
 node_modules/
 npm-debug.log
@@ -58,5 +79,8 @@ data/
 todo.txt
 .mcp.json
 
-**/.claude/settings.local.json
+# Debug files
 DEBUG_SESSION_FINDINGS.md
+*.debug
+
+**/.claude/settings.local.json
