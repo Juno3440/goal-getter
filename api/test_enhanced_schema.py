@@ -7,6 +7,7 @@ import json
 import os
 import sys
 from datetime import datetime
+from typing import Optional, Any
 
 # Add current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -17,17 +18,16 @@ os.environ["SUPABASE_KEY"] = (
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzdG55eGxkaXFmYmN2enh0enhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4ODY5MTgsImV4cCI6MjA2NDQ2MjkxOH0.qinSNo9vUvAEQsrJcESBjmUnJWagJbSX0RguxjMr1C0"
 )
 
+# Import after setting environment
+import db
+
 # Test user
 TEST_USER_ID = "550e8400-e29b-41d4-a716-446655440000"
 
 
-def test_enhanced_schema():
+def test_enhanced_schema() -> bool:
     """Test the enhanced schema functionality"""
-    db = None
     try:
-        # Import after setting environment
-        import db
-
         print("✅ Successfully imported db module")
 
         # Clean up any existing test data
@@ -112,12 +112,11 @@ def test_enhanced_schema():
 
     finally:
         # Clean up
-        if db:
-            try:
-                db.supabase.table("goals").delete().eq("user_id", TEST_USER_ID).execute()
-                print("✅ Cleaned up test data")
-            except Exception as e:
-                print(f"⚠️  Cleanup warning: {e}")
+        try:
+            db.supabase.table("goals").delete().eq("user_id", TEST_USER_ID).execute()
+            print("✅ Cleaned up test data")
+        except Exception as e:
+            print(f"⚠️  Cleanup warning: {e}")
 
 
 if __name__ == "__main__":

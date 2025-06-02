@@ -13,11 +13,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
 from pydantic import BaseModel, ConfigDict, Field
 
-# Import db module - handle different import contexts
-try:
-    from . import db  # Package import
-except ImportError:
-    import db  # Direct import when running as script
+# Import db module
+import db
 
 # Load environment variables
 load_dotenv()
