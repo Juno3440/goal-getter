@@ -7,7 +7,7 @@ import json
 import os
 import sys
 from datetime import datetime
-from typing import Optional, Any
+from typing import Any, Optional
 
 # Add current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
