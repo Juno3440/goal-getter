@@ -1,4 +1,3 @@
-import { MouseEvent } from 'react';
 import { TreeNode } from '../types';
 
 interface NodeCardProps {
