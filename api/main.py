@@ -247,7 +247,7 @@ async def update_goal(goal_id: UUID, payload: GoalUpdate, user: Dict[str, Any] =
     """Update a goal's properties"""
     try:
         updates = {}
-        
+
         # Map payload fields to updates dictionary
         field_mappings = [
             ("title", payload.title),
