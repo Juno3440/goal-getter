@@ -497,8 +497,8 @@ describe('Goal Tree Integration Tests', () => {
     it('should handle rapid goal creation without race conditions', async () => {
       let callCount = 0;
       
-      (globalThis.fetch as any).mockImplementation((url: string) => {
-        if (url.includes('/goals') && !url.includes('POST')) {
+      (globalThis.fetch as any).mockImplementation((_url: string, options: any) => {
+        if (options?.method === 'PATCH') {
           // GET requests - return current state
           return Promise.resolve({
             ok: true,
@@ -553,7 +553,7 @@ describe('Goal Tree Integration Tests', () => {
       ];
 
       let updateCount = 0;
-      (globalThis.fetch as any).mockImplementation((url: string, options: any) => {
+      (globalThis.fetch as any).mockImplementation((_url: string, options: any) => {
         if (options?.method === 'PATCH') {
           updateCount++;
           return Promise.resolve({
