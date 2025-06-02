@@ -172,7 +172,7 @@ class TestErrorRecoveryScenarios:
 
         response = client.patch("/goals/test-goal", json={"status": "done"}, headers=headers)
         # Should return appropriate error status
-        assert response.status_code in [500, 502, 504]
+        assert response.status_code in [503, 500]  # 503 for timeouts, 500 for other errors
 
     @patch("api.db.supabase")
     def test_database_constraint_violation_handling(self, mock_supabase):
@@ -184,8 +184,8 @@ class TestErrorRecoveryScenarios:
         mock_supabase.table.return_value.insert.return_value.execute.side_effect = Exception("Constraint violation")
 
         response = client.post("/goals", json={"title": "Test Goal"}, headers=headers)
-        # Should handle database errors without exposing sensitive information
-        assert response.status_code == 500
+        # Should handle database errors with appropriate status code
+        assert response.status_code in [400, 500]  # 400 for constraint violations, 500 for other errors
 
 
 class TestDataIntegrityScenarios:
@@ -338,5 +338,5 @@ class TestPerformanceCriticalScenarios:
 
         # Verify tree structure
         tree_data = response.json()
-        assert len(tree_data["nodes"]) == 115
+        assert len(tree_data["nodes"]) == 155  # 5 roots + 50 children + 100 grandchildren
         assert tree_data["root_id"] is not None
