@@ -11,10 +11,11 @@ import pytest
 os.environ["TESTING"] = "true"
 
 # Global test configuration - use dev database for all integration tests
-os.environ["SUPABASE_URL"] = "https://tstnyxldiqfbcvzxtzxi.supabase.co"
-os.environ["SUPABASE_KEY"] = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzdG55eGxkaXFmYmN2enh0enhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4ODY5MTgsImV4cCI6MjA2NDQ2MjkxOH0.qinSNo9vUvAEQsrJcESBjmUnJWagJbSX0RguxjMr1C0"
-)
+# These should be set as environment variables, not hardcoded
+if not os.environ.get("SUPABASE_URL"):
+    raise ValueError("SUPABASE_URL environment variable must be set for tests")
+if not os.environ.get("SUPABASE_KEY"):
+    raise ValueError("SUPABASE_KEY environment variable must be set for tests")
 
 # Test user for integration tests - use proper UUID format
 TEST_USER_ID = "550e8400-e29b-41d4-a716-446655440000"

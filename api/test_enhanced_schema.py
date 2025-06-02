@@ -12,13 +12,20 @@ from typing import Any, Optional
 # Add current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Set up dev environment
-os.environ["SUPABASE_URL"] = "https://tstnyxldiqfbcvzxtzxi.supabase.co"
-os.environ["SUPABASE_KEY"] = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzdG55eGxkaXFmYmN2enh0enhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4ODY5MTgsImV4cCI6MjA2NDQ2MjkxOH0.qinSNo9vUvAEQsrJcESBjmUnJWagJbSX0RguxjMr1C0"
-)
+# Ensure environment variables are set
+if not os.environ.get("SUPABASE_URL"):
+    print("❌ SUPABASE_URL environment variable not set")
+    print("   Please set up your environment variables first:")
+    print("   bash setup_test_env.sh")
+    sys.exit(1)
 
-# Import after setting environment
+if not os.environ.get("SUPABASE_KEY"):
+    print("❌ SUPABASE_KEY environment variable not set") 
+    print("   Please set up your environment variables first:")
+    print("   bash setup_test_env.sh")
+    sys.exit(1)
+
+# Import after checking environment
 import db
 
 # Test user
