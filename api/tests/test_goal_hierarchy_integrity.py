@@ -63,7 +63,7 @@ class TestGoalHierarchyIntegrity:
 
     def test_orphaned_goals_handling(self):
         """Test handling of goals with non-existent parent references."""
-        goals_with_orphans = [
+        goals_with_orphans: List[Dict[str, Any]] = [
             {"id": "root-1", "parent_id": None, "title": "Valid Root"},
             {"id": "orphan-1", "parent_id": "nonexistent-parent", "title": "Orphaned Goal"},
             {"id": "orphan-2", "parent_id": "another-missing", "title": "Another Orphan"},
@@ -111,7 +111,7 @@ class TestGoalStatusPropagation:
     def test_child_completion_affects_parent_progress(self):
         """Test that completing children affects parent progress calculation."""
         # This is critical goal-tree logic that's not currently tested
-        hierarchy_data = [
+        hierarchy_data: List[Dict[str, Any]] = [
             {"id": "parent", "parent_id": None, "title": "Learn Programming", "status": "doing"},
             {"id": "child-1", "parent_id": "parent", "title": "Learn Python", "status": "done"},
             {"id": "child-2", "parent_id": "parent", "title": "Learn JavaScript", "status": "todo"},
@@ -222,7 +222,7 @@ class TestTreeTraversalEdgeCases:
 
     def test_tree_statistics_calculation(self):
         """Test calculating tree-wide statistics (depth, breadth, completion %)."""
-        tree_data = [
+        tree_data: List[Dict[str, Any]] = [
             {"id": "root", "parent_id": None, "status": "doing", "title": "Root"},
             {"id": "child-1", "parent_id": "root", "status": "done", "title": "Child 1"},
             {"id": "child-2", "parent_id": "root", "status": "todo", "title": "Child 2"},

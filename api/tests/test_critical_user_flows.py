@@ -181,8 +181,6 @@ class TestErrorRecoveryScenarios:
         headers = {"Authorization": f"Bearer {user_token}"}
 
         # Simulate constraint violation (e.g., duplicate ID, invalid foreign key)
-        from supabase import SupabaseError
-
         mock_supabase.table.return_value.insert.return_value.execute.side_effect = Exception("Constraint violation")
 
         response = client.post("/goals", json={"title": "Test Goal"}, headers=headers)
