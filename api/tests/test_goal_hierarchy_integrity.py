@@ -239,7 +239,7 @@ class TestTreeTraversalEdgeCases:
 
             def traverse(nodes, depth=0):
                 nonlocal total_goals, completed_goals, max_depth
-                
+
                 for node in nodes:
                     total_goals += 1
                     max_depth = max(max_depth, depth)
