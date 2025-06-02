@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from jose import jwt  # python-jose
-
 from supabase import create_client
 
 # Load environment variables
