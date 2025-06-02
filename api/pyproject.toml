@@ -3,9 +3,8 @@ name = "goal-os-api"
 version = "0.1.0"
 description = "FastAPI backend for Goal OS application"
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Goal OS Team", email = "team@goal-os.dev"}
 ]
-readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi==0.110.0",
@@ -17,27 +16,6 @@ dependencies = [
     "supabase>=2,<3",
     "python-jose[cryptography]==3.3.0",
 ]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "httpx>=0.24.0,<0.28.0",
-    "pytest-mock>=3.11.0",
-    "pytest-cov>=4.1.0",
-    "mypy>=1.5.0",
-    "flake8>=6.0.0",
-    "black>=23.0.0",
-    "isort>=5.12.0",
-    "pre-commit>=3.3.0",
-]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["api"]
 
 [tool.uv]
 dev-dependencies = [
@@ -54,7 +32,7 @@ dev-dependencies = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["api/tests"]
+testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
@@ -63,7 +41,7 @@ addopts = [
     "--tb=short",
     "--strict-markers",
     "--disable-warnings",
-    "--cov=api",
+    "--cov=.",
     "--cov-report=xml",
     "--cov-report=term-missing",
 ]
@@ -139,7 +117,7 @@ exclude = [
 ]
 
 [tool.coverage.run]
-source = ["api"]
+source = ["."]
 omit = [
     "*/tests/*",
     "*/__pycache__/*",
