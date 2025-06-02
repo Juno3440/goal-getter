@@ -1,5 +1,4 @@
 import { MouseEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { TreeNode } from '../types';
 
 interface NodeCardProps {
@@ -8,8 +7,6 @@ interface NodeCardProps {
 }
 
 export default function NodeCard({ node, onToggleCollapse }: NodeCardProps) {
-  const navigate = useNavigate();
-  
   // Status badge styling
   const statusClasses = {
     pending: 'retro-status-pending',
@@ -24,21 +21,8 @@ export default function NodeCard({ node, onToggleCollapse }: NodeCardProps) {
     }
   };
   
-  const handleCardClick = (e: MouseEvent<HTMLDivElement>) => {
-    // If clicking on header, don't navigate
-    if ((e.target as HTMLElement).closest('.retro-node-header')) {
-      return;
-    }
-    
-    // Navigate to goal detail page
-    navigate(`/goal/${node.id}`);
-  };
-  
   return (
-    <div 
-      className="retro-node-card w-full h-full"
-      onClick={handleCardClick}
-    >
+    <div className="retro-node-card w-full h-full">
       <div 
         className="retro-node-header flex justify-between items-center cursor-pointer"
         onClick={handleHeaderClick}
