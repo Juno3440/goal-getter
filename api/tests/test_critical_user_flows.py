@@ -3,12 +3,14 @@ Critical User Flow Tests
 Tests complete user journeys and high-risk scenarios in goal management.
 """
 
-import pytest
 import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 from jose import jwt
-from api.main import app, JWT_SECRET, AUDIENCE
+
+from api.main import AUDIENCE, JWT_SECRET, app
 
 client = TestClient(app)
 
