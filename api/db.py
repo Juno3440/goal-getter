@@ -76,12 +76,19 @@ def get_all_goals(user_id: str) -> List[Dict[str, Any]]:
     Returns:
         Hierarchical tree of user's goals
     """
-    data = supabase.table("goals").select("*").eq("user_id", user_id).execute()
+    # Select all columns from the enhanced schema
+    columns = """
+        id, user_id, title, description, status, kind, 
+        priority, impact, urgency, parent_id, path, depth,
+        metadata, ai_state, deadline, completed_at, 
+        created_at, updated_at
+    """
+    data = supabase.table("goals").select(columns).eq("user_id", user_id).execute()
 
     return build_tree(data.data)
 
 
-def create_goal(user_id: str, title: str, parent_id: Optional[str] = None) -> Dict[str, Any]:
+def create_goal(user_id: str, title: str, parent_id: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """
     Create a new goal for the user.
 
@@ -89,6 +96,7 @@ def create_goal(user_id: str, title: str, parent_id: Optional[str] = None) -> Di
         user_id: The authenticated user's ID
         title: The goal title
         parent_id: Optional parent goal ID
+        **kwargs: Additional goal fields (description, status, kind, priority, etc.)
 
     Returns:
         The created goal data
@@ -97,6 +105,26 @@ def create_goal(user_id: str, title: str, parent_id: Optional[str] = None) -> Di
 
     if parent_id:
         payload["parent_id"] = parent_id
+
+    # Add optional fields if provided
+    if "description" in kwargs and kwargs["description"] is not None:
+        payload["description"] = kwargs["description"]
+    if "status" in kwargs and kwargs["status"] is not None:
+        payload["status"] = kwargs["status"]
+    if "kind" in kwargs and kwargs["kind"] is not None:
+        payload["kind"] = kwargs["kind"]
+    if "priority" in kwargs and kwargs["priority"] is not None:
+        payload["priority"] = kwargs["priority"]
+    if "impact" in kwargs and kwargs["impact"] is not None:
+        payload["impact"] = kwargs["impact"]
+    if "urgency" in kwargs and kwargs["urgency"] is not None:
+        payload["urgency"] = kwargs["urgency"]
+    if "deadline" in kwargs and kwargs["deadline"] is not None:
+        payload["deadline"] = (
+            kwargs["deadline"].isoformat() if hasattr(kwargs["deadline"], "isoformat") else kwargs["deadline"]
+        )
+    if "metadata" in kwargs and kwargs["metadata"] is not None:
+        payload["metadata"] = kwargs["metadata"]
 
     response = supabase.table("goals").insert(payload).execute()
     return response.data[0] if response.data else {}
@@ -108,12 +136,22 @@ def update_goal(goal_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
 
     Args:
         goal_id: The goal ID to update
-        updates: Dictionary of fields to update (title, status)
+        updates: Dictionary of fields to update
 
     Returns:
         Updated goal data
     """
-    updates["updated_at"] = "NOW()"
+    # Handle datetime fields
+    if "deadline" in updates and updates["deadline"] is not None:
+        if hasattr(updates["deadline"], "isoformat"):
+            updates["deadline"] = updates["deadline"].isoformat()
+    if "completed_at" in updates and updates["completed_at"] is not None:
+        if hasattr(updates["completed_at"], "isoformat"):
+            updates["completed_at"] = updates["completed_at"].isoformat()
+
+    # The updated_at trigger will handle this automatically
+    # updates["updated_at"] = "NOW()"
+
     response = supabase.table("goals").update(updates).eq("id", goal_id).execute()
 
     return response.data[0] if response.data else {}
