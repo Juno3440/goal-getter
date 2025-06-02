@@ -70,6 +70,7 @@ class GoalCreate(BaseModel):
 class GoalUpdate(BaseModel):
     title: Optional[str] = None
     status: Optional[str] = Field(default=None, pattern="^(todo|doing|done)$")
+    parent_id: Optional[UUID] = None
 
 
 class TreeNode(BaseModel):
@@ -151,33 +152,62 @@ async def create_goal(payload: GoalCreate, user: Dict[str, Any] = Depends(get_cu
     user_id = user.get("sub")
     if not user_id:
         raise HTTPException(status_code=401, detail="User ID not found in token")
-    parent_id = str(payload.parent_id) if payload.parent_id else None
-    goal = db.create_goal(user_id, payload.title, parent_id)
-    return goal
+    
+    try:
+        parent_id = str(payload.parent_id) if payload.parent_id else None
+        goal = db.create_goal(user_id, payload.title, parent_id)
+        return goal
+    except Exception as e:
+        # Convert database errors to appropriate HTTP responses
+        error_msg = str(e).lower()
+        if "constraint" in error_msg or "violation" in error_msg:
+            raise HTTPException(status_code=400, detail="Invalid data or constraint violation")
+        elif "timeout" in error_msg or "network" in error_msg:
+            raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+        else:
+            raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.patch("/goals/{goal_id}")
 async def update_goal(goal_id: UUID, payload: GoalUpdate, user: Dict[str, Any] = Depends(get_current_user)):
     """Update a goal's properties"""
-    updates = {}
-    if payload.title is not None:
-        updates["title"] = payload.title
-    if payload.status is not None:
-        updates["status"] = payload.status
+    try:
+        updates = {}
+        if payload.title is not None:
+            updates["title"] = payload.title
+        if payload.status is not None:
+            updates["status"] = payload.status
+        if payload.parent_id is not None:
+            updates["parent_id"] = str(payload.parent_id)
 
-    goal = db.update_goal(str(goal_id), updates)
-    if not goal:
-        raise HTTPException(status_code=404, detail="Goal not found")
-    return goal
+        goal = db.update_goal(str(goal_id), updates)
+        if not goal:
+            raise HTTPException(status_code=404, detail="Goal not found")
+        return goal
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions as-is
+    except Exception as e:
+        # Convert database errors to appropriate HTTP responses
+        error_msg = str(e).lower()
+        if "timeout" in error_msg or "network" in error_msg:
+            raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+        else:
+            raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.delete("/goals/{goal_id}", status_code=204)
 async def delete_goal(goal_id: UUID, user: Dict[str, Any] = Depends(get_current_user)):
     """Delete a goal"""
-    success = db.delete_goal(str(goal_id))
-    if not success:
-        raise HTTPException(status_code=404, detail="Goal not found")
-    return None
+    try:
+        success = db.delete_goal(str(goal_id))
+        if not success:
+            raise HTTPException(status_code=404, detail="Goal not found")
+        return None
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions as-is
+    except Exception as e:
+        # Convert database errors to appropriate HTTP responses
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # JSON export endpoint for the tree visualization
