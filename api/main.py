@@ -152,7 +152,7 @@ async def create_goal(payload: GoalCreate, user: Dict[str, Any] = Depends(get_cu
     user_id = user.get("sub")
     if not user_id:
         raise HTTPException(status_code=401, detail="User ID not found in token")
-    
+
     try:
         parent_id = str(payload.parent_id) if payload.parent_id else None
         goal = db.create_goal(user_id, payload.title, parent_id)
