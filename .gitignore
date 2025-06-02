@@ -83,3 +83,4 @@ DEBUG_SESSION_FINDINGS.md
 *.debug
 
 **/.claude/settings.local.json
+.vercel
