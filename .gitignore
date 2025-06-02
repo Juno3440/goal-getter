@@ -84,3 +84,4 @@ DEBUG_SESSION_FINDINGS.md
 
 **/.claude/settings.local.json
 .vercel
+web/coverage/
