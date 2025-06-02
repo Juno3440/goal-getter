@@ -31,7 +31,7 @@ class TestCompleteGoalLifecycle:
 
         # Step 1: Create parent goal
         mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [
-            {"id": "parent-goal", "title": "Learn Web Development", "status": "todo", "user_id": "user-123"}
+            {"id": "550e8400-e29b-41d4-a716-446655440000", "title": "Learn Web Development", "status": "todo", "user_id": "user-123"}
         ]
 
         response = client.post("/goals", json={"title": "Learn Web Development"}, headers=headers)
@@ -40,7 +40,7 @@ class TestCompleteGoalLifecycle:
 
         # Step 2: Create child goals
         mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [
-            {"id": "child-1", "title": "Learn HTML", "status": "todo", "parent_id": "parent-goal"}
+            {"id": "550e8400-e29b-41d4-a716-446655440001", "title": "Learn HTML", "status": "todo", "parent_id": "550e8400-e29b-41d4-a716-446655440000"}
         ]
 
         response = client.post("/goals", json={"title": "Learn HTML", "parent_id": parent_goal["id"]}, headers=headers)
@@ -48,26 +48,26 @@ class TestCompleteGoalLifecycle:
 
         # Step 3: Update child goal status to "doing"
         mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [
-            {"id": "child-1", "title": "Learn HTML", "status": "doing"}
+            {"id": "550e8400-e29b-41d4-a716-446655440001", "title": "Learn HTML", "status": "doing"}
         ]
 
-        response = client.patch(f"/goals/child-1", json={"status": "doing"}, headers=headers)
+        response = client.patch(f"/goals/550e8400-e29b-41d4-a716-446655440001", json={"status": "doing"}, headers=headers)
         assert response.status_code == 200
 
         # Step 4: Complete child goal
         mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [
-            {"id": "child-1", "title": "Learn HTML", "status": "done"}
+            {"id": "550e8400-e29b-41d4-a716-446655440001", "title": "Learn HTML", "status": "done"}
         ]
 
-        response = client.patch(f"/goals/child-1", json={"status": "done"}, headers=headers)
+        response = client.patch(f"/goals/550e8400-e29b-41d4-a716-446655440001", json={"status": "done"}, headers=headers)
         assert response.status_code == 200
 
         # Step 5: Try to delete parent (should handle children appropriately)
         mock_supabase.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = [
-            {"id": "parent-goal"}
+            {"id": "550e8400-e29b-41d4-a716-446655440000"}
         ]
 
-        response = client.delete(f"/goals/parent-goal", headers=headers)
+        response = client.delete(f"/goals/550e8400-e29b-41d4-a716-446655440000", headers=headers)
         assert response.status_code == 204
 
     @patch("api.db.supabase")
@@ -103,7 +103,11 @@ class TestCompleteGoalLifecycle:
         # TODO: Implement bulk update endpoint like PATCH /goals/bulk
 
         # For now, test sequential updates
-        goals_to_update = ["goal-1", "goal-2", "goal-3"]
+        goals_to_update = [
+            "550e8400-e29b-41d4-a716-446655440010", 
+            "550e8400-e29b-41d4-a716-446655440011", 
+            "550e8400-e29b-41d4-a716-446655440012"
+        ]
 
         for goal_id in goals_to_update:
             mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [
@@ -170,7 +174,7 @@ class TestErrorRecoveryScenarios:
             "Network timeout"
         )
 
-        response = client.patch("/goals/test-goal", json={"status": "done"}, headers=headers)
+        response = client.patch("/goals/550e8400-e29b-41d4-a716-446655440020", json={"status": "done"}, headers=headers)
         # Should return appropriate error status
         assert response.status_code in [503, 500]  # 503 for timeouts, 500 for other errors
 
@@ -204,14 +208,14 @@ class TestDataIntegrityScenarios:
 
         # Mock getting all goals to show parent-child relationship
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
-            {"id": "parent", "title": "Parent Goal", "parent_id": None},
-            {"id": "child", "title": "Child Goal", "parent_id": "parent"},
+            {"id": "550e8400-e29b-41d4-a716-446655440030", "title": "Parent Goal", "parent_id": None},
+            {"id": "550e8400-e29b-41d4-a716-446655440031", "title": "Child Goal", "parent_id": "550e8400-e29b-41d4-a716-446655440030"},
         ]
 
         # Mock deletion of parent
-        mock_supabase.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = [{"id": "parent"}]
+        mock_supabase.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = [{"id": "550e8400-e29b-41d4-a716-446655440030"}]
 
-        response = client.delete("/goals/parent", headers=headers)
+        response = client.delete("/goals/550e8400-e29b-41d4-a716-446655440030", headers=headers)
         assert response.status_code == 204
 
         # TODO: Verify children are handled appropriately (cascaded, orphaned, or prevented)
@@ -225,10 +229,10 @@ class TestDataIntegrityScenarios:
 
         # Try to create goal with non-existent parent
         mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [
-            {"id": "new-goal", "parent_id": "nonexistent-parent", "title": "Invalid Goal"}
+            {"id": "550e8400-e29b-41d4-a716-446655440040", "parent_id": "550e8400-e29b-41d4-a716-446655440099", "title": "Invalid Goal"}
         ]
 
-        response = client.post("/goals", json={"title": "Invalid Goal", "parent_id": "nonexistent-parent"}, headers=headers)
+        response = client.post("/goals", json={"title": "Invalid Goal", "parent_id": "550e8400-e29b-41d4-a716-446655440099"}, headers=headers)
 
         # TODO: Should validate parent exists before creating goal
         # Currently this would succeed but create an orphaned reference
@@ -243,10 +247,10 @@ class TestDataIntegrityScenarios:
 
         # Try to mark parent as "done" while children are still "todo"
         mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [
-            {"id": "parent", "status": "done"}
+            {"id": "550e8400-e29b-41d4-a716-446655440050", "status": "done"}
         ]
 
-        response = client.patch("/goals/parent", json={"status": "done"}, headers=headers)
+        response = client.patch("/goals/550e8400-e29b-41d4-a716-446655440050", json={"status": "done"}, headers=headers)
         assert response.status_code == 200
 
         # TODO: Implement business logic to handle this scenario:
@@ -273,9 +277,10 @@ class TestPerformanceCriticalScenarios:
         # Create mock data for 100 goals in a deep hierarchy
         large_tree_data = []
         for i in range(100):
-            parent_id = f"goal-{i-1}" if i > 0 else None
+            goal_id = f"550e8400-e29b-41d4-a716-{446655440000 + i:012d}"
+            parent_id = f"550e8400-e29b-41d4-a716-{446655440000 + i - 1:012d}" if i > 0 else None
             large_tree_data.append(
-                {"id": f"goal-{i}", "title": f"Goal {i}", "parent_id": parent_id, "status": "todo", "user_id": "user-123"}
+                {"id": goal_id, "title": f"Goal {i}", "parent_id": parent_id, "status": "todo", "user_id": "user-123"}
             )
 
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = large_tree_data
