@@ -2,19 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Architecture: Development/Production Split
-- **`/app/`** - Clean development API (work here for AI-assisted development)
-- **`/api/`** - Production build (auto-generated, don't edit directly)
-- Use `scripts/sync_to_production.py` before deployment
-- See `docs/git-workflow.md` for complete workflow guide
+## Architecture: Simplified Single API
+- **`/api/`** - Single API codebase (all endpoints and features)
+- **`/web/`** - Frontend React application
+- **`/api/tests/`** - Backend tests
 
 ## Development Commands
-- Run server: `uvicorn app.main:app --reload`
-- Run tests: `pytest app/`
-- Check types: `mypy app/`
-- Lint code: `flake8 app/`
-- Sync to production: `python scripts/sync_to_production.py`
-- Validate sync: `python scripts/validate_sync.py`
+- Run server: `cd api && python -m uvicorn main:app --reload --port 8000`
+- Run tests: `cd api && pytest`
+- Check types: `cd api && mypy .`
+- Lint code: `cd api && flake8 .`
 
 ## Frontend Commands (in /web/)
 - Run dev server: `npm run dev`
@@ -35,12 +32,39 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Variable naming: snake_case
 - Document all public functions and modules with docstrings
 
+## API Endpoints
+- **GET /goals** - List all goals (hierarchical)
+- **GET /api/tree** - Tree visualization format
+- **POST /goals** - Create new goal
+- **PATCH /goals/{id}** - Update goal
+- **DELETE /goals/{id}** - Delete goal
+- **GET /gpt/goals** - GPT integration endpoint (API key auth)
+
 ## CI/CD Pipeline
 - **Trigger**: Push to `main` or `develop`, PRs to these branches
 - **Backend Tests**: Python 3.11, flake8, mypy, pytest
 - **Frontend Tests**: Node.js 18, ESLint, TypeScript, build verification
-- **Deployment**: Auto-sync `/app/` → `/api/` and deploy on main branch
+- **Deployment**: Direct deployment from `/api/`
 - **Secrets Required**: `SUPABASE_URL`, `SUPABASE_KEY`, `JWT_SECRET`, `JWT_AUDIENCE`, `GPT_API_KEY`, `DEFAULT_USER_ID`, `FRONTEND_URL`
+
+## Environment Variables
+### Backend (.env)
+```
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
+JWT_SECRET=your_jwt_secret
+JWT_AUDIENCE=authenticated
+GPT_API_KEY=your_gpt_api_key
+DEFAULT_USER_ID=your_user_id
+FRONTEND_URL=http://localhost:3000
+```
+
+### Frontend (web/.env)
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_API_URL=http://localhost:8000
+```
 
 ## Deployment Options
 ### Option 1: Vercel (Recommended for MVP)

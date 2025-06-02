@@ -6,6 +6,56 @@ import { motion } from 'framer-motion';
 import { TreeNode, TreeResponse, HierarchyNode } from '../types';
 import NodeCard from './NodeCard';
 
+// Type for the raw goal data from API before conversion to TreeNode
+interface RawGoalData {
+  id: string;
+  title: string;
+  status: string;
+  children?: RawGoalData[];
+}
+
+// Convert hierarchical tree data to flat TreeNode array
+function flattenTreeNodes(treeData: RawGoalData[]): TreeNode[] {
+  const flatNodes: TreeNode[] = [];
+  
+  function traverseNode(node: RawGoalData, parentId: string | null = null) {
+    // Convert goal data to TreeNode format
+    const treeNode: TreeNode = {
+      id: node.id,
+      parent_id: parentId,
+      title: node.title,
+      progress: 0.5, // Default progress, can be updated later
+      status: node.status === 'todo' ? 'pending' : 
+              node.status === 'doing' ? 'active' : 
+              node.status === 'done' ? 'done' : 'pending',
+      style: {
+        color: '#1f2937',
+        accent: '#FF003C'
+      },
+      ui: {
+        collapsed: false
+      },
+      children: []
+    };
+    
+    flatNodes.push(treeNode);
+    
+    // Recursively process children
+    if (node.children && Array.isArray(node.children)) {
+      for (const child of node.children) {
+        traverseNode(child, node.id);
+      }
+    }
+  }
+  
+  // Process all root nodes
+  for (const rootNode of treeData) {
+    traverseNode(rootNode);
+  }
+  
+  return flatNodes;
+}
+
 // Dead-man switch wrapper to sanitize data and prevent crashes
 function deepCloneAndSanitize(node: TreeNode): TreeNode {
   // Deep copy so we never mutate the original
@@ -63,7 +113,7 @@ export default function GoalTree({ onUpdate: _onUpdate, session }: GoalTreeProps
     
     try {
       console.log('Fetching data from API...');
-      const response = await fetch(`${apiUrl}/api/tree`, {
+      const response = await fetch(`${apiUrl}/goals`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
@@ -75,7 +125,22 @@ export default function GoalTree({ onUpdate: _onUpdate, session }: GoalTreeProps
       
       const data = await response.json();
       console.log('Received data:', data);
-      setTreeData(data);
+      
+      // Check if data is already in TreeResponse format or if it's a hierarchical array
+      if (Array.isArray(data)) {
+        // Convert hierarchical tree to flat TreeResponse format
+        const flatNodes = flattenTreeNodes(data);
+        const treeResponse: TreeResponse = {
+          schema_version: '1.0',
+          generated_at: new Date().toISOString(),
+          root_id: flatNodes.length > 0 ? flatNodes[0].id : null,
+          nodes: flatNodes
+        };
+        setTreeData(treeResponse);
+      } else {
+        // Already in TreeResponse format
+        setTreeData(data);
+      }
     } catch (err) {
       console.error('Error fetching tree data:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
