@@ -2,7 +2,6 @@ import { useState, ReactNode, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import GoalTree from './components/GoalTree';
-import GoalKanban from './components/GoalKanban';
 import GoalInput from './components/GoalInput';
 import Auth from './components/Auth';
 import { supabase } from './supabase';
@@ -61,14 +60,6 @@ function App() {
                     <GoalInput session={session} onGoalCreated={handleGoalCreated} />
                     <GoalTree key={refreshKey} session={session} />
                   </div>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/goal/:id" 
-              element={
-                <ProtectedRoute>
-                  <GoalKanban session={session} />
                 </ProtectedRoute>
               } 
             />

@@ -1,18 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { BrowserRouter } from 'react-router-dom';
 import NodeCard from '../../components/NodeCard';
 import { TreeNode } from '../../types';
-
-// Mock react-router-dom
-const mockNavigate = vi.fn();
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom') as any;
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
 
 const mockNode: TreeNode = {
   id: '123',
@@ -32,17 +21,11 @@ const mockNode: TreeNode = {
 
 const renderNodeCard = (node: TreeNode = mockNode, onToggleCollapse?: (id: string) => void) => {
   return render(
-    <BrowserRouter>
-      <NodeCard node={node} onToggleCollapse={onToggleCollapse} />
-    </BrowserRouter>
+    <NodeCard node={node} onToggleCollapse={onToggleCollapse} />
   );
 };
 
 describe('NodeCard', () => {
-  beforeEach(() => {
-    mockNavigate.mockClear();
-  });
-
   it('renders node information correctly', () => {
     renderNodeCard();
     
@@ -94,28 +77,6 @@ describe('NodeCard', () => {
 
     expect(mockToggleCollapse).toHaveBeenCalledOnce();
     expect(mockToggleCollapse).toHaveBeenCalledWith('123');
-  });
-
-  it('navigates to goal detail when card body is clicked', () => {
-    renderNodeCard();
-
-    const progressLabel = screen.getByText('Progress');
-    fireEvent.click(progressLabel);
-
-    expect(mockNavigate).toHaveBeenCalledOnce();
-    expect(mockNavigate).toHaveBeenCalledWith('/goal/123');
-  });
-
-  it('does not navigate when header is clicked', () => {
-    const mockToggleCollapse = vi.fn();
-    renderNodeCard(mockNode, mockToggleCollapse);
-
-    const header = screen.getByText('Test Goal').closest('.retro-node-header');
-    fireEvent.click(header!);
-
-    // Should call toggle collapse but not navigate
-    expect(mockToggleCollapse).toHaveBeenCalledOnce();
-    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('handles missing onToggleCollapse prop gracefully', () => {
