@@ -3,10 +3,12 @@ Goal Hierarchy Integrity Tests
 Tests critical goal-tree logic, circular references, and data consistency.
 """
 
-import pytest
+from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from api.db import build_tree, create_goal, delete_goal, update_goal
-from typing import Dict, List, Any
 
 
 class TestGoalHierarchyIntegrity:
