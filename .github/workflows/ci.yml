@@ -18,30 +18,25 @@ jobs:
       GPT_API_KEY: ${{ secrets.GPT_API_KEY }}
       DEFAULT_USER_ID: test-user-id
       FRONTEND_URL: http://localhost:3000
+      # Configure a constant location for the uv cache
+      UV_CACHE_DIR: /tmp/.uv-cache
     
     steps:
     - uses: actions/checkout@v4
     
     - name: Install uv
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v5
       with:
-        version: "latest"
+        # Pin to specific version for reproducibility
+        version: "0.5.11"
         enable-cache: true
+        cache-dependency-glob: "uv.lock"
     
-    - name: Set up Python with uv
-      run: |
-        uv python install 3.10
-        uv python pin 3.10
+    - name: Set up Python
+      run: uv python install 3.10
     
-    - name: Verify uv setup
-      run: |
-        uv --version
-        uv python list
-        which python || echo "No python found"
-    
-    - name: Install dependencies
-      run: |
-        uv sync --dev
+    - name: Install dependencies with lockfile
+      run: uv sync --frozen --dev
     
     - name: Lint with flake8
       run: |
@@ -49,20 +44,19 @@ jobs:
         uv run flake8 api/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     
     - name: Format check with black
-      run: |
-        uv run black --check --diff api/
+      run: uv run black --check --diff api/
     
     - name: Import sort check with isort
-      run: |
-        uv run isort --check-only --diff api/
+      run: uv run isort --check-only --diff api/
     
     - name: Type check with mypy
-      run: |
-        uv run mypy api/ --ignore-missing-imports
+      run: uv run mypy api/ --ignore-missing-imports
     
     - name: Test with pytest
-      run: |
-        uv run pytest api/tests/ --cov=api --cov-report=xml --cov-report=term-missing
+      run: uv run pytest api/tests/ --cov=api --cov-report=xml --cov-report=term-missing
+    
+    - name: Minimize uv cache
+      run: uv cache prune --ci
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
