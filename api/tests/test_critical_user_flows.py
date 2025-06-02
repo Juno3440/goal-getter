@@ -31,7 +31,12 @@ class TestCompleteGoalLifecycle:
 
         # Step 1: Create parent goal
         mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [
-            {"id": "550e8400-e29b-41d4-a716-446655440000", "title": "Learn Web Development", "status": "todo", "user_id": "user-123"}
+            {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "title": "Learn Web Development",
+                "status": "todo",
+                "user_id": "user-123",
+            }
         ]
 
         response = client.post("/goals", json={"title": "Learn Web Development"}, headers=headers)
@@ -40,7 +45,12 @@ class TestCompleteGoalLifecycle:
 
         # Step 2: Create child goals
         mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [
-            {"id": "550e8400-e29b-41d4-a716-446655440001", "title": "Learn HTML", "status": "todo", "parent_id": "550e8400-e29b-41d4-a716-446655440000"}
+            {
+                "id": "550e8400-e29b-41d4-a716-446655440001",
+                "title": "Learn HTML",
+                "status": "todo",
+                "parent_id": "550e8400-e29b-41d4-a716-446655440000",
+            }
         ]
 
         response = client.post("/goals", json={"title": "Learn HTML", "parent_id": parent_goal["id"]}, headers=headers)
@@ -104,9 +114,9 @@ class TestCompleteGoalLifecycle:
 
         # For now, test sequential updates
         goals_to_update = [
-            "550e8400-e29b-41d4-a716-446655440010", 
-            "550e8400-e29b-41d4-a716-446655440011", 
-            "550e8400-e29b-41d4-a716-446655440012"
+            "550e8400-e29b-41d4-a716-446655440010",
+            "550e8400-e29b-41d4-a716-446655440011",
+            "550e8400-e29b-41d4-a716-446655440012",
         ]
 
         for goal_id in goals_to_update:
@@ -209,11 +219,17 @@ class TestDataIntegrityScenarios:
         # Mock getting all goals to show parent-child relationship
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
             {"id": "550e8400-e29b-41d4-a716-446655440030", "title": "Parent Goal", "parent_id": None},
-            {"id": "550e8400-e29b-41d4-a716-446655440031", "title": "Child Goal", "parent_id": "550e8400-e29b-41d4-a716-446655440030"},
+            {
+                "id": "550e8400-e29b-41d4-a716-446655440031",
+                "title": "Child Goal",
+                "parent_id": "550e8400-e29b-41d4-a716-446655440030",
+            },
         ]
 
         # Mock deletion of parent
-        mock_supabase.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = [{"id": "550e8400-e29b-41d4-a716-446655440030"}]
+        mock_supabase.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = [
+            {"id": "550e8400-e29b-41d4-a716-446655440030"}
+        ]
 
         response = client.delete("/goals/550e8400-e29b-41d4-a716-446655440030", headers=headers)
         assert response.status_code == 204
@@ -229,10 +245,16 @@ class TestDataIntegrityScenarios:
 
         # Try to create goal with non-existent parent
         mock_supabase.table.return_value.insert.return_value.execute.return_value.data = [
-            {"id": "550e8400-e29b-41d4-a716-446655440040", "parent_id": "550e8400-e29b-41d4-a716-446655440099", "title": "Invalid Goal"}
+            {
+                "id": "550e8400-e29b-41d4-a716-446655440040",
+                "parent_id": "550e8400-e29b-41d4-a716-446655440099",
+                "title": "Invalid Goal",
+            }
         ]
 
-        response = client.post("/goals", json={"title": "Invalid Goal", "parent_id": "550e8400-e29b-41d4-a716-446655440099"}, headers=headers)
+        response = client.post(
+            "/goals", json={"title": "Invalid Goal", "parent_id": "550e8400-e29b-41d4-a716-446655440099"}, headers=headers
+        )
 
         # TODO: Should validate parent exists before creating goal
         # Currently this would succeed but create an orphaned reference
