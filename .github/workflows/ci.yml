@@ -30,30 +30,36 @@ jobs:
         # Pin to specific version for reproducibility
         version: "0.5.11"
         enable-cache: true
-        cache-dependency-glob: "uv.lock"
+        cache-dependency-glob: "api/uv.lock"
     
     - name: Set up Python
       run: uv python install 3.10
     
     - name: Install dependencies with lockfile
-      run: uv sync --frozen --dev
+      working-directory: api
+      run: uv sync --dev
     
     - name: Lint with flake8
+      working-directory: api
       run: |
-        uv run flake8 api/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        uv run flake8 api/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        uv run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        uv run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     
     - name: Format check with black
-      run: uv run black --check --diff api/
+      working-directory: api
+      run: uv run black --check --diff .
     
     - name: Import sort check with isort
-      run: uv run isort --check-only --diff api/
+      working-directory: api
+      run: uv run isort --check-only --diff .
     
     - name: Type check with mypy
-      run: uv run mypy api/ --ignore-missing-imports
+      working-directory: api
+      run: uv run mypy . --ignore-missing-imports
     
     - name: Test with pytest
-      run: uv run pytest api/tests/ --cov=api --cov-report=xml --cov-report=term-missing
+      working-directory: api
+      run: uv run pytest tests/ --cov=. --cov-report=xml --cov-report=term-missing
     
     - name: Minimize uv cache
       run: uv cache prune --ci
@@ -61,7 +67,7 @@ jobs:
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        file: ./coverage.xml
+        file: ./api/coverage.xml
         flags: backend
         name: backend-coverage
         fail_ci_if_error: false
