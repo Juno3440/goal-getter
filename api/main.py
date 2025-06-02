@@ -145,23 +145,47 @@ class TreeResponse(BaseModel):
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
     """
-    Verify JWT token and extract user info.
+    Verify JWT token and extract user info using Supabase auth.
     """
     try:
         token = credentials.credentials
-        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"], audience=AUDIENCE)
-        # Warn if token is about to expire within 5 minutes
-        exp = payload.get("exp")
-        if exp:
-            now = int(time.time())
-            if exp - now <= 300:
-                logging.warning(f"JWT expiring soon (in {exp - now} seconds)")
-
-        # Alternatively, validate with Supabase directly
-        # user = db.supabase.auth.api.get_user(token)
-
-        return payload
+        
+        # Use Supabase to verify the token instead of manual JWT decode
+        # This works because db.supabase is configured with the correct project
+        response = db.supabase.auth.get_user(token)
+        
+        if not response.user:
+            raise HTTPException(status_code=401, detail="Invalid token or user not found")
+        
+        # Ensure user exists in our users table
+        user_id = response.user.id
+        email = response.user.email or "unknown@example.com"
+        full_name = response.user.user_metadata.get("full_name") or response.user.user_metadata.get("name") or "Unknown User"
+        
+        # Try to insert user (with upsert to avoid conflicts)
+        try:
+            db.supabase.table("users").upsert({
+                "id": user_id,
+                "email": email,
+                "full_name": full_name,
+                "openai_sub": None  # Can be set later if needed
+            }).execute()
+            print(f"[DEBUG] User upserted: {user_id}, {email}, {full_name}")
+        except Exception as upsert_error:
+            print(f"[DEBUG] User upsert failed (might be OK): {upsert_error}")
+        
+        # Return a payload similar to what JWT decode would return
+        user_payload = {
+            "sub": user_id,  # User ID
+            "email": email,
+            "aud": "authenticated",
+            "role": "authenticated",
+            # Add any other fields we need
+        }
+        
+        return user_payload
     except Exception as e:
+        print(f"[DEBUG] Auth error: {str(e)}")
         raise HTTPException(status_code=401, detail=f"Invalid authentication: {str(e)}")
 
 
@@ -206,6 +230,9 @@ async def create_goal(payload: GoalCreate, user: Dict[str, Any] = Depends(get_cu
     if not user_id:
         raise HTTPException(status_code=401, detail="User ID not found in token")
 
+    print(f"[DEBUG] Creating goal for user_id: {user_id}")
+    print(f"[DEBUG] Goal payload: {payload}")
+
     try:
         parent_id = str(payload.parent_id) if payload.parent_id else None
 
@@ -226,17 +253,23 @@ async def create_goal(payload: GoalCreate, user: Dict[str, Any] = Depends(get_cu
             if field_value is not None:
                 kwargs[field_name] = field_value
 
+        print(f"[DEBUG] Calling db.create_goal with user_id={user_id}, title={payload.title}, parent_id={parent_id}, kwargs={kwargs}")
+        
         goal = db.create_goal(user_id, payload.title, parent_id, **kwargs)
+        
+        print(f"[DEBUG] Goal created successfully: {goal}")
         return goal
     except Exception as e:
+        print(f"[DEBUG] Goal creation failed with error: {str(e)}")
+        print(f"[DEBUG] Error type: {type(e)}")
         # Convert database errors to appropriate HTTP responses
         error_msg = str(e).lower()
         if "constraint" in error_msg or "violation" in error_msg:
-            raise HTTPException(status_code=400, detail="Invalid data or constraint violation")
+            raise HTTPException(status_code=400, detail=f"Invalid data or constraint violation: {str(e)}")
         elif "timeout" in error_msg or "network" in error_msg:
             raise HTTPException(status_code=503, detail="Service temporarily unavailable")
         else:
-            raise HTTPException(status_code=500, detail="Internal server error")
+            raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @app.patch("/goals/{goal_id}")
