@@ -1,6 +1,6 @@
-# GoalGPT
+# Goal OS
 
-A hierarchical goal management application with FastAPI backend and React frontend, designed for LLM integration and optimized for productivity workflows.
+**Goal OS** is a comprehensive goal tracking and management system designed to help you organize, track, and achieve your personal and professional objectives through a hierarchical structure.
 
 ## 🚀 **Recent Migration to uv**
 
@@ -36,121 +36,128 @@ make help                        # Show all available commands
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
-**Frontend (React + TypeScript)**
-- Vite build system
-- TailwindCSS for styling  
-- Tree visualization for goal hierarchies
-- Real-time goal management interface
+Goal OS consists of two main components:
 
-**Backend (FastAPI + Python)**
-- RESTful API with automatic OpenAPI docs
-- JWT authentication integration
-- Supabase database integration
-- Hierarchical goal tree management
+1. **Backend API** (`/api`): FastAPI-based REST API with Supabase integration
+2. **Frontend Web App** (`/web`): React + TypeScript application with modern UI
 
-**Deployment**
-- **Vercel** for both frontend and backend deployment
-- Environment-based configuration
-- Automatic deployments from main branch
+## 🚀 Features
 
-## Quick Start
+- **Hierarchical Goal Structure**: Organize goals in a tree-like structure with parent-child relationships
+- **Real-time Updates**: Live synchronization across all connected clients
+- **Progress Tracking**: Visual indicators and completion percentages
+- **User Authentication**: Secure user management with JWT tokens
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+
+## 🛠️ Tech Stack
+
+### Backend
+- **FastAPI**: Modern Python web framework
+- **Supabase**: Backend-as-a-Service for database and authentication
+- **PostgreSQL**: Robust relational database
+- **JWT**: Secure authentication tokens
+- **Pydantic**: Data validation and serialization
+
+### Frontend
+- **React 18**: Modern UI library with hooks
+- **TypeScript**: Type-safe JavaScript
+- **Vite**: Fast build tool and dev server
+- **Supabase Client**: Real-time database integration
+- **CSS Modules**: Scoped styling
+
+### Development & Deployment
+- **uv**: Fast Python package manager
+- **pytest**: Testing framework
+- **Black**: Code formatting
+- **ESLint**: JavaScript/TypeScript linting
+- **Vercel**: Deployment platform
+- **GitHub Actions**: CI/CD pipeline
+
+## 🎯 Getting Started
 
 ### Prerequisites
-- **uv** (recommended) or Python 3.10+
-- **Node.js 18+** (for frontend)
-- **Supabase account** (for database)
+
+- Python 3.10+
+- Node.js 18+
+- uv (Python package manager)
+- Supabase account
 
 ### Backend Setup
 
-1. **Install dependencies:**
+1. **Clone the repository**
    ```bash
-   uv sync --dev
+   git clone <repository-url>
+   cd goal-os
    ```
 
-2. **Environment setup:**
+2. **Install backend dependencies**
+   ```bash
+   cd api
+   uv sync
+   ```
+
+3. **Set up environment variables**
    ```bash
    cp .env.example .env
    # Edit .env with your Supabase credentials
    ```
 
-3. **Run development server:**
+4. **Run the backend**
    ```bash
-   make run-dev
-   # or: uv run uvicorn api.main:app --reload
+   uv run uvicorn main:app --reload
    ```
-
-4. **API Documentation:** http://localhost:8000/docs
 
 ### Frontend Setup
 
-1. **Navigate to web directory:**
+1. **Install frontend dependencies**
    ```bash
    cd web
-   ```
-
-2. **Install dependencies:**
-   ```bash
    npm install
    ```
 
-3. **Start development server:**
+2. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your configuration
+   ```
+
+3. **Run the frontend**
    ```bash
    npm run dev
    ```
 
-4. **Frontend:** http://localhost:3000
+## 🧪 Testing
 
-### Database Setup
-
-1. Create a new Supabase project
-2. Run the SQL migrations in `supabase/migrations/`
-3. Configure Row Level Security (RLS) policies
-4. Update environment variables
-
-## Development Workflow
-
-### Code Quality Tools (All configured in pyproject.toml)
-
+### Backend Tests
 ```bash
-make lint                        # Run all linting (flake8, black, isort, mypy)
-make format                      # Auto-format code (black, isort)
-make type-check                  # Type checking with mypy
-make test                        # Run tests with coverage
+cd api
+uv run pytest
 ```
 
-### Pre-commit Hooks
-
+### Frontend Tests
 ```bash
-make pre-commit                  # Install git hooks for automatic formatting
+cd web
+npm test
 ```
 
-### Testing
-
-```bash
-make test                        # Run all tests with coverage
-uv run pytest api/tests/         # Run specific test directory
-uv run pytest -v -k "test_name"  # Run specific test
-```
-
-## Project Structure
+## 📁 Project Structure
 
 ```
-GoalGPT/
-├── api/                         # FastAPI backend
-│   ├── main.py                  # FastAPI application
-│   ├── db.py                    # Database operations
-│   └── tests/                   # Backend tests
-├── web/                         # React frontend
-│   ├── src/                     # Frontend source
-│   └── package.json             # Frontend dependencies
-├── supabase/                    # Database migrations
-├── .github/workflows/           # CI/CD pipelines
-├── pyproject.toml              # Python project config & dependencies
-├── uv.lock                     # Dependency lockfile
-├── Makefile                    # Development commands
-└── vercel.json                 # Deployment configuration
+Goal OS/
+├── api/                    # Backend API
+│   ├── main.py            # FastAPI application
+│   ├── db.py              # Database operations
+│   ├── tests/             # Backend tests
+│   └── pyproject.toml     # Python dependencies
+├── web/                   # Frontend application
+│   ├── src/               # Source code
+│   ├── tests/             # Frontend tests
+│   └── package.json       # Node.js dependencies
+├── docs/                  # Documentation
+├── supabase/             # Database schema and config
+└── vercel.json           # Deployment configuration
 ```
 
 ## API Endpoints
