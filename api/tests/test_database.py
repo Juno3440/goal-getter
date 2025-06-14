@@ -140,7 +140,7 @@ class TestDatabaseOperations:
 
     @patch("api.db.supabase")
     def test_get_all_goals_success(self, mock_supabase):
-        """Test successful goal retrieval."""
+        """Test successful goal retrieval with tree building."""
         # Mock Supabase response
         mock_response = MagicMock()
         mock_response.data = [{"id": "goal-1", "user_id": "user-123", "title": "Test Goal", "parent_id": None}]
@@ -151,7 +151,14 @@ class TestDatabaseOperations:
 
         # Verify Supabase was called correctly
         mock_supabase.table.assert_called_with("goals")
-        mock_supabase.table.return_value.select.assert_called_with("*")
+        # Updated to match enhanced schema column selection
+        expected_columns = """
+        id, user_id, title, description, status, kind, 
+        priority, impact, urgency, parent_id, path, depth,
+        metadata, ai_state, deadline, completed_at, 
+        created_at, updated_at
+    """
+        mock_supabase.table.return_value.select.assert_called_with(expected_columns)
         mock_supabase.table.return_value.select.return_value.eq.assert_called_with("user_id", "user-123")
 
         # Verify result structure
@@ -206,8 +213,8 @@ class TestDatabaseOperations:
         updates = {"title": "Updated Title", "status": "done"}
         result = update_goal("goal-id", updates)
 
-        # Verify Supabase was called correctly
-        expected_updates = {"title": "Updated Title", "status": "done", "updated_at": "NOW()"}
+        # Verify Supabase was called correctly - updated_at is now handled by database
+        expected_updates = {"title": "Updated Title", "status": "done"}
         mock_supabase.table.return_value.update.assert_called_with(expected_updates)
         mock_supabase.table.return_value.update.return_value.eq.assert_called_with("id", "goal-id")
 

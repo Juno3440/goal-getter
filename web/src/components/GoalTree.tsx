@@ -113,34 +113,22 @@ export default function GoalTree({ onUpdate: _onUpdate, session }: GoalTreeProps
     
     try {
       console.log('Fetching data from API...');
-      const response = await fetch(`${apiUrl}/goals`, {
+      const response = await fetch(`${apiUrl}/api/tree`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
       });
       
       if (!response.ok) {
-        throw new Error('Failed to fetch tree data');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to fetch tree data');
       }
       
       const data = await response.json();
-      console.log('Received data:', data);
+      console.log('Received tree data:', data);
       
-      // Check if data is already in TreeResponse format or if it's a hierarchical array
-      if (Array.isArray(data)) {
-        // Convert hierarchical tree to flat TreeResponse format
-        const flatNodes = flattenTreeNodes(data);
-        const treeResponse: TreeResponse = {
-          schema_version: '1.0',
-          generated_at: new Date().toISOString(),
-          root_id: flatNodes.length > 0 ? flatNodes[0].id : null,
-          nodes: flatNodes
-        };
-        setTreeData(treeResponse);
-      } else {
-        // Already in TreeResponse format
-        setTreeData(data);
-      }
+      // Data should already be in TreeResponse format from /api/tree
+      setTreeData(data);
     } catch (err) {
       console.error('Error fetching tree data:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');

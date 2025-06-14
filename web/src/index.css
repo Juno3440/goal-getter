@@ -200,6 +200,73 @@ body {
   transform: none;
 }
 
+.retro-button-secondary {
+  background: transparent;
+  border: 2px solid rgba(255, 0, 60, 0.5);
+  color: rgba(255, 0, 60, 0.8);
+  padding: 12px 24px;
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retro-button-secondary:hover:not(:disabled) {
+  border-color: var(--retro-red);
+  color: var(--retro-white);
+  box-shadow: 0 0 10px rgba(255, 0, 60, 0.3);
+  transform: translateY(-2px);
+}
+
+.retro-panel {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 0, 60, 0.3);
+  border-radius: 4px;
+  backdrop-filter: blur(5px);
+}
+
+.retro-text {
+  font-family: 'Orbitron', monospace;
+  color: var(--retro-white);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.retro-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--retro-black);
+  border: 1px solid var(--retro-red);
+  outline: none;
+  cursor: pointer;
+}
+
+.retro-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--retro-red);
+  border: 1px solid var(--retro-white);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px var(--retro-red);
+}
+
+.retro-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--retro-red);
+  border: 1px solid var(--retro-white);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px var(--retro-red);
+}
+
 .retro-error {
   color: var(--retro-red);
   font-family: 'Orbitron', monospace;
